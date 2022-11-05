@@ -68,7 +68,7 @@ class ResSupFinder:
         return resistances
 
     def assign_score(self, vals):
-        # vals should be in the  get_resistances() or get_supports data format
+        # vals should be in the  self.get_resistances() or self.get_supports() data format
 
         assigned_scores = []
 
@@ -101,8 +101,29 @@ class ResSupFinder:
             idx = diff.argmax()
             return arr[idx]
 
-    def find_strongest(self, val):
-        pass
+    def find_strongest(self, val, strength):
+
+        if self.direction == 1:
+            scores = self.assign_score(self.get_resistances())
+            scores.sort()
+            for score in scores:
+                if score[0]>val and score[1] == strength:
+                    return score[0]
+
+            else:
+                return self.find_closest(val)
+
+        if self.direction == 0:
+            scores = self.assign_score(self.get_resistances())
+            scores.sort(reverse=True)
+            for score in scores:
+                if score[0]<val and score[1] == strength:
+                    return score[0]
+
+            else:
+                return self.find_closest(val)
+
+
 
     def plot_vals(self, vals):
         # vals should be the assign_score data format
@@ -141,20 +162,21 @@ class ResSupFinder:
 df = pd.DataFrame()
 df = df.ta.ticker("AAPL", period="5d", interval="5m")
 
-res_sup_finder = ResSupFinder(df, 3, 2, 1)
+res_sup_finder = ResSupFinder(df, 2, 2, 0)
 
 resistances = res_sup_finder.get_resistances()
-print(resistances)
+# print(resistances)
 
-supports = res_sup_finder.get_supports()
+# supports = res_sup_finder.get_supports()
 # print(supports)
 
-# print(res_sup_finder.assign_score(resistances))
+print(res_sup_finder.assign_score(resistances))
+print(res_sup_finder.find_strongest(142.60000610351562, 2))
 
-print(res_sup_finder.find_closest(142.60000610351562))
+# print(res_sup_finder.find_closest(142.60000610351562))
 
-assigned_resistances = res_sup_finder.assign_score(resistances)
-# print(res_sup_finder.plot_vals(assigned_resistances))
+scored_resistances = res_sup_finder.assign_score(resistances)
+# print(res_sup_finder.plot_vals(scored_resistances))
 
 
 
