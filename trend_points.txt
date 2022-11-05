@@ -1,0 +1,10 @@
+chart points : on 99
+
+
+
+growing fast -> + 50 :  33
+growing slow -> 1 - +50 : 24.75
+slowing slow -> 0 - -50 : 16.50
+slowing fast -> -50 - 99 : 8.25
+reversing : -> -100
+
