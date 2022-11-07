@@ -3,8 +3,6 @@ import pandas_ta as ta
 import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
-from decimal import Decimal
-import math
 
 
 class ResSupFinder:
@@ -160,7 +158,7 @@ class ResSupFinder:
 """______________________________________________________________________________________________________"""
 
 df = pd.DataFrame()
-df = df.ta.ticker("AAPL", period="5d", interval="5m")
+df = df.ta.ticker("EURUSD=X", period="1mo", interval="15m")
 
 res_sup_finder = ResSupFinder(df, 2, 2, 0)
 
