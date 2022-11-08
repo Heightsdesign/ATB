@@ -105,7 +105,8 @@ class ResSupFinder:
             for score in scores:
                 if score[0] > val and score[1] == strength:
                     return score[0]
-
+                elif score[0] > val and score[1] == strength - 1:
+                    return score[0]
             else:
                 return self.find_closest(val)
 
@@ -113,7 +114,9 @@ class ResSupFinder:
             scores = self.assign_score(self.get_resistances())
             scores.sort(reverse=True)
             for score in scores:
-                if score[0]<val and score[1] == strength:
+                if score[0] < val and score[1] == strength:
+                    return score[0]
+                elif score[0] < val and score[1] == strength - 1:
                     return score[0]
 
             else:
@@ -156,7 +159,7 @@ class ResSupFinder:
 # df = pd.DataFrame()
 # df = df.ta.ticker("EURUSD=X", period="5d", interval="5m")
 
-# res_sup_finder = ResSupFinder(df, 3, 3, 0)
+# res_sup_finder = ResSupFinder(df, 3, 2, 0)
 
 # resistances = res_sup_finder.get_resistances()
 # print(resistances)
@@ -165,7 +168,7 @@ class ResSupFinder:
 # print(supports)
 
 # print(res_sup_finder.assign_score(resistances))
-# print(res_sup_finder.find_strongest(142.60000610351562, 2))
+# print(res_sup_finder.find_strongest(1.000299, 3))
 
 # print(res_sup_finder.find_closest(1.002205))
 

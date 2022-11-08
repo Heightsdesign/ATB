@@ -23,18 +23,22 @@ class Simulator:
                               14, 60, 40,
                               9, 26,
                               200,
-                              100, 100)
+                              200, 100)
 
         self.df = self.strat.create_strategy_df()
         self.rsf_vals = [4,3]
 
-        # Setup
+        # Setup string indexes
         self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_{self.strat.macd_fast}"
-        self.xa = str(self.strat.xa)
-        self.xb = str(self.strat.xb)
+        self.macd = f"MACD_{self.macd_con}"
+        self.macds = f"MACDs_{self.macd_con}"
+        self.macdh = f"MACDh_{self.macd_con}"
+        self.xa = f"RSI_14_A_{self.strat.xa}"
+        self.xb = f"RSI_14_B_{self.strat.xb}"
         self.rsi_len = str(self.strat.rsi_length)
-        self.ema_len = str(self.strat.ema_length)
-        self.angle = self.strat.get_trend_line_angle()
+        self.ema = f"EMA_{self.strat.ema_length}"
+        self.trend_win = self.strat.trend_line_win
+        self.trend_lever = self.strat.trend_lever
 
     def add_cols(self, col_names):
         """Adds empty columns"""
@@ -44,7 +48,7 @@ class Simulator:
 
         return self.df
 
-    def simulate(self):
+    def simulate_df(self):
 
         self.add_cols(["sell", "buy", "sl", "tp"])
         # print(self.df.tail(20))
@@ -55,17 +59,21 @@ class Simulator:
 
             """Buying position logic"""
 
-            # if self.df.iloc[i]['RSI_14_B_' + self.xb] == 1 and self.df.iloc[i - 1]['RSI_14_B_' + self.xb] == 0:
-            if self.df.iloc[i]['MACDs_' + self.macd_con] < self.df.iloc[i]['MACD_' + self.macd_con] < 0:
-                # if self.df.iloc[i]['EMA_' + self.ema_len] > self.df.iloc[i]['Close']:
-                if self.angle > 20:
+            # if self.df.iloc[i][self.xb] == 1 and self.df.iloc[i - 1][self.xb] == 0:
+            if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0:
+
+                # if self.df.iloc[i][self.ema] > self.df.iloc[i]['Close']:
+                if self.strat.get_angle_two_points(
+                        self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
+                ) > 10:
+
                     self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
 
-                    sl = rsf(self.df, 4, 3, 0).find_closest(self.df.iloc[i]['Close'])
+                    sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 3)
                     if sl:
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
                     else:
-                        sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_closest(
+                        sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
                             self.df.iloc[i]['Close'])
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
@@ -74,19 +82,22 @@ class Simulator:
 
             """Selling position logic"""
 
-            # if self.df.iloc[i]['RSI_14_A_' + self.xa] == 1 and self.df.iloc[i - 1]['RSI_14_A_' + self.xa] == 0:
-            if self.df.iloc[i]['MACDs_' + self.macd_con] > self.df.iloc[i]['MACD_' + self.macd_con] > 0:
-                # if self.df.iloc[i]['EMA_' + self.ema_len] < self.df.iloc[i]['Close']:
-                if self.angle < -20:
+            # if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
+            if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0:
+
+                # if self.df.iloc[i][self.ema] < self.df.iloc[i]['Close']:
+                if self.strat.get_angle_two_points(
+                        self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
+                ) < -10:
 
                     self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
 
-                    sl = rsf(self.df, 4, 3, 1).find_closest(self.df.iloc[i]['Close'])
+                    sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 3)
                     if sl:
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
                     else:
-                        sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_closest(
-                            self.df.iloc[i]['Close'])
+                        sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
+                            self.df.iloc[i]['Close'], 3)
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
                     tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
@@ -94,8 +105,13 @@ class Simulator:
 
         return self.df
 
+    def simulate(self):
+
+        self.df = self.simulate_df()
+        return self.df
+
 
 """__________________________________________________________________________________________________________________"""
 
-print(Simulator().simulate().tail(500))
-#
+# print(Simulator().simulate_df().tail(650))
+print(Simulator().simulate().tail(200))

@@ -59,7 +59,7 @@ class Strategy:
         """Gets the shift percentage between two values"""
         return (new_val - old_val) / old_val * 100
 
-    def GetAngleOfLineBetweenTwoPoints(self, og_val, next_val):
+    def get_angle_two_points(self, og_val, next_val):
         """Get the angle in degrees between two points
         use the trend lever to get right values"""
 
@@ -79,7 +79,7 @@ class Strategy:
         now_point = df.iloc[-1]['EMA_' + str(self.ema_length)]
         previous_point = df.iloc[-self.trend_line_win]['EMA_' + str(self.ema_length)]
 
-        trend_angle = self.GetAngleOfLineBetweenTwoPoints(previous_point, now_point)
+        trend_angle = self.get_angle_two_points(previous_point, now_point)
         print(f"Trend angle : {trend_angle}, Previous point : {previous_point}, Now point : {now_point}")
 
         return trend_angle
