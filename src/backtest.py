@@ -62,7 +62,8 @@ class Simulator:
             """Buying position logic"""
 
             # if self.df.iloc[i][self.xb] == 1 and self.df.iloc[i - 1][self.xb] == 0:
-            if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0:
+            if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0\
+                    and self.df.iloc[i][self.macdh] > 0.0001:
 
                 # if self.df.iloc[i][self.ema] > self.df.iloc[i]['Close']:
                 if self.strat.get_angle_two_points(
@@ -85,7 +86,8 @@ class Simulator:
             """Selling position logic"""
 
             # if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
-            if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0:
+            if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0\
+                    and self.df.iloc[i][self.macdh] < -0.0001:
 
                 # if self.df.iloc[i][self.ema] < self.df.iloc[i]['Close']:
                 if self.strat.get_angle_two_points(
@@ -203,7 +205,7 @@ class Simulator:
                         results.append(res)
                         positions.remove(pos)
 
-                    elif self.df.iloc[i]["Low"] >= pos["sl"]:
+                    elif self.df.iloc[i]["High"] >= pos["sl"]:
                         loss = pos["open_val"] - pos["sl"]
                         res = {
                             "idx": i,
