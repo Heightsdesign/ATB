@@ -20,12 +20,14 @@ class ResSupFinder:
     def support_finder(self, l):
 
         for i in range(l - self.n1 + 1, l + 1):
-            if self.df["Low"][i] > self.df["Low"][i - 1]:
-                return 0
+            if i < len(self.df):
+                if self.df["Low"][i] > self.df["Low"][i - 1]:
+                    return 0
 
         for i in range(l + 1, l + self.n2 + 1):
-            if self.df["Low"][i] < self.df["Low"][i - 1]:
-                return 0
+            if i < len(self.df):
+                if self.df["Low"][i] < self.df["Low"][i - 1]:
+                    return 0
 
         return 1
 
@@ -81,23 +83,19 @@ class ResSupFinder:
         if self.direction == 1:
 
             res_vals = self.get_resistances()
+            res_vals.sort()
 
-            arr = np.asarray(res_vals)
-            diff = arr - val
-            diff[diff < 0] = np.inf
-            idx = diff.argmin()
-
-            return arr[idx]
+            for res in res_vals:
+                if res > val:
+                    return res
 
         if self.direction == 0:
 
             sup_vals = self.get_supports()
-
-            arr = np.asarray(sup_vals)
-            diff = arr - val
-            diff[diff > 0] = -np.inf
-            idx = diff.argmax()
-            return arr[idx]
+            sup_vals.sort(reverse=True)
+            for sup in sup_vals:
+                if sup < val:
+                    return sup
 
     def find_strongest(self, val, strength):
 
@@ -105,7 +103,7 @@ class ResSupFinder:
             scores = self.assign_score(self.get_resistances())
             scores.sort()
             for score in scores:
-                if score[0]>val and score[1] == strength:
+                if score[0] > val and score[1] == strength:
                     return score[0]
 
             else:
@@ -120,8 +118,6 @@ class ResSupFinder:
 
             else:
                 return self.find_closest(val)
-
-
 
     def plot_vals(self, vals):
         # vals should be the assign_score data format
@@ -155,25 +151,25 @@ class ResSupFinder:
         fig.show()
 
 
-"""______________________________________________________________________________________________________"""
+"""__________________________________________________________________________________________________________________"""
 
-df = pd.DataFrame()
-df = df.ta.ticker("EURUSD=X", period="1mo", interval="15m")
+# df = pd.DataFrame()
+# df = df.ta.ticker("EURUSD=X", period="5d", interval="5m")
 
-res_sup_finder = ResSupFinder(df, 2, 2, 0)
+# res_sup_finder = ResSupFinder(df, 3, 3, 0)
 
-resistances = res_sup_finder.get_resistances()
+# resistances = res_sup_finder.get_resistances()
 # print(resistances)
 
 # supports = res_sup_finder.get_supports()
 # print(supports)
 
-print(res_sup_finder.assign_score(resistances))
-print(res_sup_finder.find_strongest(142.60000610351562, 2))
+# print(res_sup_finder.assign_score(resistances))
+# print(res_sup_finder.find_strongest(142.60000610351562, 2))
 
-# print(res_sup_finder.find_closest(142.60000610351562))
+# print(res_sup_finder.find_closest(1.002205))
 
-scored_resistances = res_sup_finder.assign_score(resistances)
+# scored_resistances = res_sup_finder.assign_score(resistances)
 # print(res_sup_finder.plot_vals(scored_resistances))
 
 

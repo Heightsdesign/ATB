@@ -88,9 +88,9 @@ class Strategy:
 """__________________________________________________________________________________________________________________"""
 
 
-strategy = Strategy("EURUSD=X", "2wk", "5m", 14, 65, 35, 9, 26, 200, 200, 100)
-print(strategy.create_strategy_df().tail(35))
-print(strategy.get_trend_line_angle())
+# strategy = Strategy("EURUSD=X", "2wk", "5m", 14, 65, 35, 9, 26, 200, 200, 100)
+# print(strategy.create_strategy_df().tail(35))
+# print(strategy.get_trend_line_angle())
 # print(help(ta.macd))
 
 
