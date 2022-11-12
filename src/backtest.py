@@ -220,8 +220,18 @@ class Simulator:
                         }
                         results.append(res)
                         positions.remove(pos)
+        pprint.pprint(results)
+        return results
 
-        return pprint.pprint(positions), pprint.pprint(results)
+    def get_stats(self):
+
+        results = self.simulate()
+        num_positions = len(results)
+        num_wins = 0
+        num_losses = 0
+        win_ratio = 0
+        total_profit = 0
+
 
 
 """__________________________________________________________________________________________________________________"""
