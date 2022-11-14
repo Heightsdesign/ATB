@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 import yfinance as yf
 
 
-
 class Strategy:
 
     def __init__(self,
@@ -14,7 +13,7 @@ class Strategy:
                  rsi_length, xa, xb,
                  macd_fast, macd_slow,
                  ema_length,
-                 trend_line_win, trend_lever,
+                 trend_line_win, trend_lever, trend_angle,
                  backtest_months
                  ):
         self.tick = tick
@@ -26,7 +25,7 @@ class Strategy:
         self.macd_fast = macd_fast
         self.macd_slow = macd_slow
         self.ema_length = ema_length
-        self.backtest_months = backtest_months
+
 
         # The number of candles to consider to evaluate the trend angle
         self.trend_line_win = trend_line_win
@@ -36,23 +35,19 @@ class Strategy:
         to move several integer points within a day while a currency pair 
         might only move a few decimal points, the lever is used compensate
         that difference."""
+
         self.trend_lever = trend_lever
-
-    def get_month_delta(self, num_months):
-        today = date.today()
-        print(str(today))
-        previous_date = today - relativedelta(months=num_months)
-        print(str(previous_date))
-        return previous_date
-
+        self.trend_angle = trend_angle
+        self.backtest_months = backtest_months
 
     def get_df(self):
+
         """Gets the data and inserts it in a dataframe"""
         dfs = []
-        final_df = pd.DataFrame()
         today = date.today()
         ticker = yf.Ticker(self.tick)
 
+        # if user selected a number of months to backtest
         if self.backtest_months:
             for i in range(self.backtest_months):
                 if self.backtest_months - i >= 1:
@@ -65,7 +60,6 @@ class Strategy:
             final_df = ticker.history(period=self.period, interval=self.interval)
 
         return final_df
-
 
     def create_strategy_df(self):
         """Creates the main dataframe using the specified
@@ -118,8 +112,8 @@ class Strategy:
 """__________________________________________________________________________________________________________________"""
 
 
-# strategy = Strategy("EURUSD=X", "1mo", "5m", 14, 65, 35, 9, 26, 200, 200, 100, 0)
-# print(strategy.create_strategy_df().tail(35))
+# strategy = Strategy("EURUSD=X", "1mo", "5m", 14, 65, 35, 9, 26, 200, 200, 100, 10, 0)
+# print(strategy.create_strategy_df().tail(50))
 # print(strategy.get_trend_line_angle())
 # print(help(ta.macd))
 

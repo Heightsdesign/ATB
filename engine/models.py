@@ -15,7 +15,7 @@ from django.db import models
 class SimStrategy(models.Model):
 
     ticker = models.CharField(max_length=10)
-    period = models.CharField(max_length=5)
+    period = models.CharField(max_length=5, null=True)
     rsi_length = models.IntegerField(blank=True, null=True)
     rsi_high = models.IntegerField(blank=True, null=True)
     rsi_low = models.IntegerField(blank=True, null=True)
@@ -24,6 +24,7 @@ class SimStrategy(models.Model):
     ema_length = models.IntegerField(blank=True, null=True)
     trend_line_win = models.IntegerField(blank=True, null=True)
     trend_lever = models.IntegerField(blank=True, null=True)
+    trend_angle = models.DecimalField(max_digits=3, decimal_places=2, null=True)
     description = models.TextField(blank=True, null=True)
 
 

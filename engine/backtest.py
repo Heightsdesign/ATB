@@ -9,7 +9,7 @@ from res_sup_finder import ResSupFinder as rsf
 
 class Simulator:
 
-    def __init__(self, start_time):
+    def __init__(self):
 
         """
         strategy parameters in order :
@@ -21,18 +21,20 @@ class Simulator:
         trend_lever, # change accordingly to average ticker shift)
         num_months, # months to run the simulation over
         """
-        self.start_time = start_time
 
         self.strat = Strategy("EURUSD=X", "1mo", "5m",
                               14, 60, 40,
                               9, 26,
                               200,
-                              200, 100, 0)
+                              200, 100, 10, 0)
 
         self.df = self.strat.create_strategy_df()
+
+        # Choose resistance, support parameters.
+        # The number of candles to consider before [0] and after [1] direction switch
         self.rsf_vals = [4,3]
 
-        # Setup string indexes
+        # Setups string indexes
         self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_{self.strat.macd_fast}"
         self.macd = f"MACD_{self.macd_con}"
         self.macds = f"MACDs_{self.macd_con}"
@@ -43,7 +45,7 @@ class Simulator:
         self.ema = f"EMA_{self.strat.ema_length}"
         self.trend_win = self.strat.trend_line_win
         self.trend_lever = self.strat.trend_lever
-        self.num_months = self.strat.num_months
+        self.num_months = self.strat.backtest_months
 
     def add_cols(self, col_names):
         """Adds empty columns"""
@@ -56,8 +58,6 @@ class Simulator:
     def simulate_df(self):
 
         self.add_cols(["sell", "buy", "sl", "tp"])
-        # print(self.df.tail(20))
-        positions = []
 
         for i in range(len(self.df)):
 
@@ -70,10 +70,12 @@ class Simulator:
                 # if self.df.iloc[i][self.ema] > self.df.iloc[i]['Close']:
                 if self.strat.get_angle_two_points(
                         self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
-                ) > 10:
+                ) > self.strat.trend_angle:
 
                     self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
 
+                    """Parameters to identify supports and resistances
+                    to set sl"""
                     sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
                     if sl:
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
@@ -94,10 +96,12 @@ class Simulator:
                 # if self.df.iloc[i][self.ema] < self.df.iloc[i]['Close']:
                 if self.strat.get_angle_two_points(
                         self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
-                ) < -10:
+                ) < -self.strat.trend_angle:
 
                     self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
 
+                    """Parameters to identify supports and resistances
+                    to set sl"""
                     sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
                     if sl:
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
@@ -238,4 +242,4 @@ class Simulator:
 """__________________________________________________________________________________________________________________"""
 
 # print(Simulator().simulate_df().tail(650))
-print(Simulator().simulate())
+# print(Simulator().simulate())
