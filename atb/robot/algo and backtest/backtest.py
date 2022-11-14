@@ -9,7 +9,7 @@ from res_sup_finder import ResSupFinder as rsf
 
 class Simulator:
 
-    def __init__(self):
+    def __init__(self, start_time):
 
         """
         strategy parameters in order :
@@ -19,13 +19,15 @@ class Simulator:
         ema_length,
         trend_line_window, # number of candles to consider
         trend_lever, # change accordingly to average ticker shift)
+        num_months, # months to run the simulation over
         """
+        self.start_time = start_time
 
-        self.strat = Strategy("EURUSD=X", "5d", "5m",
+        self.strat = Strategy("EURUSD=X", "1mo", "5m",
                               14, 60, 40,
                               9, 26,
                               200,
-                              200, 100)
+                              200, 100, 0)
 
         self.df = self.strat.create_strategy_df()
         self.rsf_vals = [4,3]
@@ -41,6 +43,7 @@ class Simulator:
         self.ema = f"EMA_{self.strat.ema_length}"
         self.trend_win = self.strat.trend_line_win
         self.trend_lever = self.strat.trend_lever
+        self.num_months = self.strat.num_months
 
     def add_cols(self, col_names):
         """Adds empty columns"""
@@ -54,7 +57,6 @@ class Simulator:
 
         self.add_cols(["sell", "buy", "sl", "tp"])
         # print(self.df.tail(20))
-
         positions = []
 
         for i in range(len(self.df)):
@@ -72,7 +74,7 @@ class Simulator:
 
                     self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
 
-                    sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 2)
+                    sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
                     if sl:
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
                     else:
@@ -96,12 +98,12 @@ class Simulator:
 
                     self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
 
-                    sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 2)
+                    sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
                     if sl:
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
                     else:
                         sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
-                            self.df.iloc[i]['Close'], 3)
+                            self.df.iloc[i]['Close'], 4)
                         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
                     tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
@@ -231,7 +233,6 @@ class Simulator:
         num_losses = 0
         win_ratio = 0
         total_profit = 0
-
 
 
 """__________________________________________________________________________________________________________________"""

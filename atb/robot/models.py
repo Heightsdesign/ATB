@@ -15,6 +15,7 @@ from django.db import models
 class SimStrategy(models.Model):
 
     ticker = models.CharField(max_length=10)
+    period = models.CharField(max_length=5)
     rsi_length = models.IntegerField(blank=True, null=True)
     rsi_high = models.IntegerField(blank=True, null=True)
     rsi_low = models.IntegerField(blank=True, null=True)

@@ -1,6 +1,10 @@
 import pandas as pd
 import pandas_ta as ta
 from math import atan2, degrees
+from datetime import date
+from dateutil.relativedelta import relativedelta
+import yfinance as yf
+
 
 
 class Strategy:
@@ -10,7 +14,8 @@ class Strategy:
                  rsi_length, xa, xb,
                  macd_fast, macd_slow,
                  ema_length,
-                 trend_line_win, trend_lever
+                 trend_line_win, trend_lever,
+                 backtest_months
                  ):
         self.tick = tick
         self.period = period
@@ -21,6 +26,7 @@ class Strategy:
         self.macd_fast = macd_fast
         self.macd_slow = macd_slow
         self.ema_length = ema_length
+        self.backtest_months = backtest_months
 
         # The number of candles to consider to evaluate the trend angle
         self.trend_line_win = trend_line_win
@@ -32,16 +38,40 @@ class Strategy:
         that difference."""
         self.trend_lever = trend_lever
 
+    def get_month_delta(self, num_months):
+        today = date.today()
+        print(str(today))
+        previous_date = today - relativedelta(months=num_months)
+        print(str(previous_date))
+        return previous_date
+
+
     def get_df(self):
         """Gets the data and inserts it in a dataframe"""
-        df = pd.DataFrame()
-        df = df.ta.ticker(self.tick, period=self.period, interval=self.interval)
-        return df
+        dfs = []
+        final_df = pd.DataFrame()
+        today = date.today()
+        ticker = yf.Ticker(self.tick)
+
+        if self.backtest_months:
+            for i in range(self.backtest_months):
+                if self.backtest_months - i >= 1:
+                    start = today - relativedelta(months=self.backtest_months - i)
+                    end = today - relativedelta(months=self.backtest_months - i - 1)
+                    df = ticker.history(start=str(start), end=str(end), interval=self.interval)
+                    dfs.append(df)
+            final_df = pd.concat(dfs)
+        else:
+            final_df = ticker.history(period=self.period, interval=self.interval)
+
+        return final_df
+
 
     def create_strategy_df(self):
         """Creates the main dataframe using the specified
         parameters the df looks like :ohlc data, rsi data,
         macd data, long ema data"""
+
 
         df = self.get_df()
         pd.set_option('display.max_rows', None)
@@ -88,10 +118,11 @@ class Strategy:
 """__________________________________________________________________________________________________________________"""
 
 
-# strategy = Strategy("EURUSD=X", "2wk", "5m", 14, 65, 35, 9, 26, 200, 200, 100)
+# strategy = Strategy("EURUSD=X", "1mo", "5m", 14, 65, 35, 9, 26, 200, 200, 100, 0)
 # print(strategy.create_strategy_df().tail(35))
 # print(strategy.get_trend_line_angle())
 # print(help(ta.macd))
+
 
 
 

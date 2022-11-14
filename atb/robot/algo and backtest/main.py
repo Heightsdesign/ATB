@@ -12,13 +12,13 @@ def main():
     ema_offset,
     trend_line_window(number of candles to consider),
     trend_lever(Change accordingly to average ticker shift)
-
+    num_months, # months to run the simulation over
     """
     strategy = Strategy("EURUSD=X", "5d", "5m",
                         14, 65, 35,
                         9, 26,
                         200,
-                        200, 100)
+                        200, 100, 0)
 
     ldp(strategy.create_strategy_df())
 
