@@ -1,51 +1,74 @@
-from django.db import models
+from peewee import *
+import datetime
 
-# Create your models here.
+# infos at : https://github.com/coleifer/peewee
+
+pg_db = PostgresqlDatabase('atb', user='postgres', password="Eug&nia06240",
+                           host='127.0.0.1', port=5432)
+
+
+class BaseModel(Model):
+    """A base model that will use our Postgresql database"""
+    class Meta:
+        database = pg_db
+
+
+class Strategy(BaseModel):
+
+    ticker = CharField(max_length=10)
+    period = CharField(max_length=5, null=True)
+    rsi_length = IntegerField(null=True)
+    rsi_high = IntegerField(null=True)
+    rsi_low = IntegerField(null=True)
+    macd_fast = IntegerField(null=True)
+    macd_slow = IntegerField(null=True)
+    ema_length = IntegerField(null=True)
+    trend_line_win = IntegerField(null=True)
+    trend_lever = IntegerField(null=True)
+    trend_angle = DecimalField(max_digits=3, decimal_places=2, null=True)
+    description = TextField(null=True)
+
+
+class Stats(BaseModel):
+
+    start_time = DateTimeField()
+    win_ratio = DecimalField(max_digits=7, decimal_places=2)
+    wins = IntegerField(null=True)
+    losses = IntegerField(null=True)
+    profit = DecimalField(max_digits=10, decimal_places=10)
+    strategy = ForeignKeyField(Strategy, null=True)
+
+
+class Results(BaseModel):
+
+    direction = IntegerField()
+    open_val = DecimalField(max_digits=10, decimal_places=10)
+    close_val = DecimalField(max_digits=10, decimal_places=10)
+    win = BooleanField(default=False)
+    loss = BooleanField(default=False)
+    date = DateTimeField()
+    profit = DecimalField(max_digits=10, decimal_places=10)
+    strategy = ForeignKeyField(Strategy, null=True)
+
+
+pg_db.connect()
+pg_db.create_tables([Strategy, Stats, Results])
+
+
 """
-        strategy parameters in order :
-        (ticker, period, interval,
-        rsi_length, rsi_high, rsi_low,
-        macd_fast, macd_slow,
-        ema_length,
-        trend_line_window, # number of candles to consider
-        trend_lever, # change accordingly to average ticker shift)
-        """
+charlie = User.create(username='charlie')
+huey = User(username='huey')
+huey.save()
 
+# No need to set `is_published` or `created_date` since they
+# will just use the default values we specified.
+Tweet.create(user=charlie, message='My first tweet')
 
-class SimStrategy(models.Model):
+# A simple query selecting a user.
+User.get(User.username == 'charlie')
 
-    ticker = models.CharField(max_length=10)
-    period = models.CharField(max_length=5, null=True)
-    rsi_length = models.IntegerField(blank=True, null=True)
-    rsi_high = models.IntegerField(blank=True, null=True)
-    rsi_low = models.IntegerField(blank=True, null=True)
-    macd_fast = models.IntegerField(blank=True, null=True)
-    macd_slow = models.IntegerField(blank=True, null=True)
-    ema_length = models.IntegerField(blank=True, null=True)
-    trend_line_win = models.IntegerField(blank=True, null=True)
-    trend_lever = models.IntegerField(blank=True, null=True)
-    trend_angle = models.DecimalField(max_digits=3, decimal_places=2, null=True)
-    description = models.TextField(blank=True, null=True)
-
-
-class SimStats(models.Model):
-
-    start_time = models.DateTimeField()
-    win_ratio = models.DecimalField(max_digits=7, decimal_places=2)
-    wins = models.IntegerField(blank=True, null=True)
-    losses = models.IntegerField(blank=True, null=True)
-    profit = models.DecimalField(max_digits=10, decimal_places=10)
-    strategy = models.ForeignKey(SimStrategy, null=True, on_delete=models.SET_NULL)
-
-
-class SimResults(models.Model):
-
-    direction = models.IntegerField()
-    open_val = models.DecimalField(max_digits=10, decimal_places=10)
-    close_val = models.DecimalField(max_digits=10, decimal_places=10)
-    win = models.BooleanField(default=False)
-    loss = models.BooleanField(default=False)
-    date = models.DateTimeField()
-    profit = models.DecimalField(max_digits=10, decimal_places=10)
-    strategy = models.ForeignKey(SimStrategy, null=True, on_delete=models.SET_NULL)
-
+# Get tweets created by one of several users.
+usernames = ['charlie', 'huey', 'mickey']
+users = User.select().where(User.username.in_(usernames))
+tweets = Tweet.select().where(Tweet.user.in_(users))
+"""
