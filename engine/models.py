@@ -28,6 +28,22 @@ class Strategy(BaseModel):
     trend_angle = DecimalField(max_digits=3, decimal_places=2, null=True)
     description = TextField(null=True)
 
+# create strategy
+strat = Strategy(
+    ticker = "EURUSD=X",
+    period="2mo",
+    rsi_length=None,
+    rsi_high=None,
+    rsi_low=None,
+    macd_fast=9,
+    macd_slow=26,
+    ema_length=200,
+    trend_line_win=100,
+    trend_lever=100,
+    trend_angle=15,
+    description="First strategy, res/sup strength = 4"
+)
+
 
 class Stats(BaseModel):
 
