@@ -1,4 +1,6 @@
 import yfinance as yf
+from models import Strategy
+
 
 
 class Fetcher:
@@ -26,3 +28,10 @@ class MultiFetcher(Fetcher):
 
         return data
 
+
+def get_strategy(sid):
+    strat = Strategy.get(id=sid)
+    return strat.ticker
+
+
+print(get_strategy(1))

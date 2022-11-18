@@ -17,27 +17,32 @@ class Strategy(BaseModel):
 
     ticker = CharField(max_length=10)
     period = CharField(max_length=5, null=True)
+    interval = CharField(max_length=5, null=True)
     rsi_length = IntegerField(null=True)
     rsi_high = IntegerField(null=True)
     rsi_low = IntegerField(null=True)
     macd_fast = IntegerField(null=True)
     macd_slow = IntegerField(null=True)
     ema_length = IntegerField(null=True)
+    sma_length = IntegerField(null=True)
     trend_line_win = IntegerField(null=True)
     trend_lever = IntegerField(null=True)
-    trend_angle = DecimalField(max_digits=3, decimal_places=2, null=True)
+    trend_angle = DecimalField(max_digits=5, decimal_places=2, null=True)
     description = TextField(null=True)
+
 
 # create strategy
 strat = Strategy(
-    ticker = "EURUSD=X",
-    period="2mo",
+    ticker="EURUSD=X",
+    period="1mo",
+    interval="5m",
     rsi_length=None,
     rsi_high=None,
     rsi_low=None,
     macd_fast=9,
     macd_slow=26,
     ema_length=200,
+    sma_length=200,
     trend_line_win=100,
     trend_lever=100,
     trend_angle=15,
@@ -68,7 +73,12 @@ class Results(BaseModel):
 
 
 pg_db.connect()
-pg_db.create_tables([Strategy, Stats, Results])
+
+# UNCOMMENT TO CREATE TABLES IN DB
+# pg_db.create_tables([Strategy, Stats, Results])
+# UNCOMMENT TO CREATE STRATEGY
+# strat.save()
+
 
 
 """
