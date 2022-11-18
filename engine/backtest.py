@@ -233,15 +233,33 @@ class Simulator:
 
     def make_stats(self):
 
-        results = self.simulate()
-        num_positions = len(results)
+        positions = Results.select().where(Results.strategy == self.strategy_id)
+        num_positions = len(positions)
         num_wins = 0
         num_losses = 0
-        win_ratio = 0
         total_profit = 0
+
+        for pos in positions:
+            if pos.win == True:
+                num_wins += 1
+            elif pos.loss == True:
+                num_losses += 1
+            total_profit += pos.profit
+
+        win_ratio = num_wins / num_losses * 100
+
+        res = {
+            "num_positions": num_positions,
+            "num_wins": num_wins,
+            "num_losses": num_losses,
+            "win_ratio" : win_ratio,
+            "total_profit": total_profit
+        }
+
+        return res
 
 
 """__________________________________________________________________________________________________________________"""
 
 # print(Simulator().simulate_df().tail(650))
-print(Simulator(5).simulate())
+print(Simulator(5).make_stats())
