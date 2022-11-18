@@ -5,7 +5,7 @@ from datetime import datetime
 import pprint
 from strategies import Strat
 from res_sup_finder import ResSupFinder as rsf
-
+from models import Results
 
 class Simulator:
 
@@ -122,6 +122,9 @@ class Simulator:
         results = []
 
         for i in range(len(self.df)):
+
+            # Code block make sure algo doesn't create position for
+            # next 30 values.
             if self.df.iloc[i]['buy'] == 1:
                 if i < len(self.df) - 30:
                     for close_idx in range(1, 30):
@@ -139,11 +142,12 @@ class Simulator:
                     }
                     positions.append(position)
 
+            # Code block make sure algo doesn't create position for
+            # next 30 values.
             if self.df.iloc[i]['sell'] == 1:
                 if i < len(self.df) - 30:
                     for close_idx in range(1, 30):
-
-                            self.df.iloc[i + close_idx, self.df.columns.get_loc('sell')] = 0
+                        self.df.iloc[i + close_idx, self.df.columns.get_loc('sell')] = 0
 
                     num_position += 1
                     position = {
@@ -161,72 +165,73 @@ class Simulator:
                 if pos["direction"] == "buy":
                     if self.df.iloc[i]["High"] >= pos["tp"]:
                         profit = pos["tp"] - pos['open_val']
-                        res = {
-                            "idx": i,
-                            "num_pos": pos["num_pos"],
-                            "direction": pos["direction"],
-                            "open_val": pos["open_val"],
-                            "close_val": pos["tp"],
-                            "win": 1,
-                            "loss": 0,
-                            "profit/loss": profit,
-                            "date": pos["date"]
-                        }
-                        results.append(res)
+                        res = Results(
+                            direction=1,
+                            open_val=round(pos["open_val"], 9),
+                            close_val=round(pos["tp"], 9),
+                            win=1,
+                            loss=0,
+                            profit=round(profit, 9),
+                            date=pos["date"],
+                            strategy=self.strategy_id
+                        )
+                        # results.append(res)
+                        res.save()
                         positions.remove(pos)
 
                     elif self.df.iloc[i]["Low"] <= pos["sl"]:
                         loss = pos["sl"] - pos["open_val"]
-                        res = {
-                            "idx": i,
-                            "num_pos": pos["num_pos"],
-                            "direction": pos["direction"],
-                            "open_val": pos["open_val"],
-                            "close_val": pos["sl"],
-                            "win": 0,
-                            "loss": 1,
-                            "profit/loss": loss,
-                            "dat": pos["date"]
-                        }
-                        results.append(res)
+                        res = Results(
+                            direction=1,
+                            open_val=round(pos["open_val"], 9),
+                            close_val=round(pos["tp"], 9),
+                            win=0,
+                            loss=1,
+                            profit=round(loss, 9),
+                            date=pos["date"],
+                            strategy=self.strategy_id
+                        )
+                        # results.append(res)
+                        res.save()
                         positions.remove(pos)
 
                 if pos["direction"] == "sell":
                     if self.df.iloc[i]["Low"] <= pos["tp"]:
                         profit = pos['open_val'] - pos["tp"]
-                        res = {
-                            "idx": i,
-                            "num_pos": pos["num_pos"],
-                            "direction": pos["direction"],
-                            "open_val": pos["open_val"],
-                            "close_val": pos["tp"],
-                            "win": 1,
-                            "loss": 0,
-                            "profit/loss": profit,
-                            "date": pos["date"]
-                        }
-                        results.append(res)
+                        res = Results(
+                            direction=0,
+                            open_val=round(pos["open_val"], 9),
+                            close_val=round(pos["tp"], 9),
+                            win=1,
+                            loss=0,
+                            profit=round(profit, 9),
+                            date=pos["date"],
+                            strategy=self.strategy_id
+                        )
+                        # results.append(res)
+                        res.save()
                         positions.remove(pos)
 
                     elif self.df.iloc[i]["High"] >= pos["sl"]:
                         loss = pos["open_val"] - pos["sl"]
-                        res = {
-                            "idx": i,
-                            "num_pos": pos["num_pos"],
-                            "direction": pos["direction"],
-                            "open_val": pos["open_val"],
-                            "close_val": pos["sl"],
-                            "win": 0,
-                            "loss": 1,
-                            "profit/loss": loss,
-                            "date": pos["date"]
-                        }
-                        results.append(res)
+                        res = Results(
+                            direction=0,
+                            open_val=round(pos["open_val"], 9),
+                            close_val=round(pos["tp"], 9),
+                            win=0,
+                            loss=1,
+                            profit=round(loss, 9),
+                            date=pos["date"],
+                            strategy=self.strategy_id
+                        )
+                        # results.append(res)
+                        res.save()
                         positions.remove(pos)
+
         pprint.pprint(results)
         return results
 
-    def get_stats(self):
+    def make_stats(self):
 
         results = self.simulate()
         num_positions = len(results)

@@ -45,7 +45,7 @@ strat = Strategy(
     sma_length=200,
     trend_line_win=100,
     trend_lever=100,
-    trend_angle=15,
+    trend_angle=10,
     description="First strategy, res/sup strength = 4"
 )
 
@@ -56,28 +56,28 @@ class Stats(BaseModel):
     win_ratio = DecimalField(max_digits=7, decimal_places=2)
     wins = IntegerField(null=True)
     losses = IntegerField(null=True)
-    profit = DecimalField(max_digits=10, decimal_places=10)
+    profit = DecimalField(max_digits=15, decimal_places=10)
     strategy = ForeignKeyField(Strategy, null=True)
 
 
 class Results(BaseModel):
 
     direction = IntegerField()
-    open_val = DecimalField(max_digits=10, decimal_places=10)
-    close_val = DecimalField(max_digits=10, decimal_places=10)
+    open_val = DecimalField(max_digits=15, decimal_places=10)
+    close_val = DecimalField(max_digits=15, decimal_places=10)
     win = BooleanField(default=False)
     loss = BooleanField(default=False)
     date = DateTimeField()
-    profit = DecimalField(max_digits=10, decimal_places=10)
+    profit = DecimalField(max_digits=15, decimal_places=10)
     strategy = ForeignKeyField(Strategy, null=True)
 
 
 pg_db.connect()
 
 # UNCOMMENT TO CREATE TABLES IN DB
-# pg_db.create_tables([Strategy, Stats, Results])
+pg_db.create_tables([Results, Stats])
 # UNCOMMENT TO CREATE STRATEGY
-# strat.save()
+
 
 
 
