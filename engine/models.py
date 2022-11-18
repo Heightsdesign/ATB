@@ -75,7 +75,7 @@ class Results(BaseModel):
 pg_db.connect()
 
 # UNCOMMENT TO CREATE TABLES IN DB
-pg_db.create_tables([Results, Stats])
+# pg_db.create_tables([Results, Stats])
 # UNCOMMENT TO CREATE STRATEGY
 
 

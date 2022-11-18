@@ -5,7 +5,7 @@ from datetime import datetime
 import pprint
 from strategies import Strat
 from res_sup_finder import ResSupFinder as rsf
-from models import Results
+from models import Results, Stats
 
 class Simulator:
 
@@ -234,15 +234,16 @@ class Simulator:
     def make_stats(self):
 
         positions = Results.select().where(Results.strategy == self.strategy_id)
+
         num_positions = len(positions)
         num_wins = 0
         num_losses = 0
         total_profit = 0
 
         for pos in positions:
-            if pos.win == True:
+            if pos.win:
                 num_wins += 1
-            elif pos.loss == True:
+            elif pos.loss:
                 num_losses += 1
             total_profit += pos.profit
 
@@ -255,6 +256,16 @@ class Simulator:
             "win_ratio" : win_ratio,
             "total_profit": total_profit
         }
+
+        stats = Stats(
+            start_time=datetime.now(),
+            win_ratio=win_ratio,
+            wins=num_wins,
+            losses=num_losses,
+            profit=total_profit,
+            strategy=self.strategy_id,
+        )
+        stats.save()
 
         return res
 
