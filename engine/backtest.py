@@ -283,43 +283,73 @@ class Launcher:
     def name_creator(self, ticker):
         res=f'{ticker}-{self.params["period"]}-{self.params["interval"]}'
         if self.params["rsi_length"]:
-            res.append('-rsi')
+            res += f'-rsi-{self.params["rsi_length"]}-{self.params["rsi_high"]}-{self.params["rsi_low"]}'
         if self.params["macd_fast"]:
-            res.append('-macd')
+            res +=f'-macd-{self.params["macd_fast"]}-{self.params["macd_slow"]}'
         if self.params["ema_length"]:
-            res.append('-ema')
+            res +=f'-ema-{self.params["ema_length"]}'
         if self.params["sma_length"]:
-            res.append('-sma')
+            res += f'-sma-{self.params["sma_length"]}'
         if self.params["trend_line_win"]:
-            res.append('-tl')
+            res += f'-tl-{self.params["trend_line_win"]}-{self.params["trend_lever"]}-{self.params["trend_angle"]}'
 
         return res
+
+    def check_duplicates(self, ticker):
+
+        strat_name = self.name_creator(ticker)
+        strat_exists = Strategy.select().where(Strategy.name == strat_name)
+        if strat_exists:
+            return True
+        else:
+            return False
 
     def strategy_creator(self):
 
         for ticker in self.indexes:
-
-            strat = Strategy(
-                name=self.name_creator(ticker),
-                ticker=ticker,
-                period=self.params["period"],
-                interval=self.params["interval"],
-                rsi_length=self.params["rsi_length"],
-                rsi_high=self.params["rsi_high"],
-                rsi_low=self.params["rsi_low"],
-                macd_fast=self.params["macd_fast"],
-                macd_slow=self.params["macd_slow"],
-                ema_length=self.params["ema_length"],
-                sma_length=self.params["sma_length"],
-                trend_line_win=self.params["trend_line_win"],
-                trend_lever=self.params["trend_lever"],
-                trend_angle=self.params["trend_angle"],
-                description=self.params["description"],
-            )
-            strat.save()
+            if not self.check_duplicates(ticker):
+                strat = Strategy(
+                    name=self.name_creator(ticker),
+                    ticker=ticker,
+                    period=self.params["period"],
+                    interval=self.params["interval"],
+                    rsi_length=self.params["rsi_length"],
+                    rsi_high=self.params["rsi_high"],
+                    rsi_low=self.params["rsi_low"],
+                    macd_fast=self.params["macd_fast"],
+                    macd_slow=self.params["macd_slow"],
+                    ema_length=self.params["ema_length"],
+                    sma_length=self.params["sma_length"],
+                    trend_line_win=self.params["trend_line_win"],
+                    trend_lever=self.params["trend_lever"],
+                    trend_angle=self.params["trend_angle"],
+                    description=self.params["description"],
+                )
+                strat.save()
 
 
 """__________________________________________________________________________________________________________________"""
 
-print(Simulator(2).simulate())
-print(Simulator(2).make_stats())
+# print(Simulator(2).simulate())
+# print(Simulator(2).make_stats())
+
+launcher = Launcher(
+    ["EURUSD=X", "EURCHF=X"],
+    {
+        "period": "1m",
+        "interval" : "5m",
+        "rsi_length": None,
+        "rsi_high": None,
+        "rsi_low": None,
+        "macd_fast": 9,
+        "macd_slow": 26,
+        "ema_length": 200,
+        "sma_length": None,
+        "trend_line_win": 200,
+        "trend_lever": 100,
+        "trend_angle": 12,
+        "description": "res:sup finder strength = 4"
+    }
+)
+
+print(launcher.strategy_creator())
