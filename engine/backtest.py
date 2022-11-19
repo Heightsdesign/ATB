@@ -272,6 +272,14 @@ class Simulator:
         return res
 
 
+"""__________________________________________________________________________________________________________________"""
+
+# print(Simulator(2).simulate())
+# print(Simulator(2).make_stats())
+
+"""__________________________________________________________________________________________________________________"""
+
+
 class Launcher:
     def __init__(self, indexes, params):
 
@@ -304,8 +312,8 @@ class Launcher:
         else:
             return False
 
-    def strategy_creator(self):
-
+    def strategies_creator(self):
+        strat_names= []
         for ticker in self.indexes:
             if not self.check_duplicates(ticker):
                 strat = Strategy(
@@ -326,18 +334,27 @@ class Launcher:
                     description=self.params["description"],
                 )
                 strat.save()
+                strat_names.append(self.name_creator(ticker))
+        print(strat_names)
+        return strat_names
+
+    def launch(self):
+        strat_names = self.strategies_creator()
+
+        for name in strat_names:
+            strat = Strategy.get(name=name)
+            print(strat.id, strat.ticker)
+            Simulator(strat.id).simulate()
+            Simulator(strat.id).make_stats()
 
 
 """__________________________________________________________________________________________________________________"""
 
-# print(Simulator(2).simulate())
-# print(Simulator(2).make_stats())
-
 launcher = Launcher(
     ["EURUSD=X", "EURCHF=X"],
     {
-        "period": "1m",
-        "interval" : "5m",
+        "period": "1mo",
+        "interval": "5m",
         "rsi_length": None,
         "rsi_high": None,
         "rsi_low": None,
@@ -352,4 +369,8 @@ launcher = Launcher(
     }
 )
 
-print(launcher.strategy_creator())
+# print(launcher.strategies_creator())
+print(launcher.launch())
+
+
+"""__________________________________________________________________________________________________________________"""
