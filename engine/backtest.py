@@ -5,7 +5,8 @@ from datetime import datetime
 import pprint
 from strategies import Strat
 from res_sup_finder import ResSupFinder as rsf
-from models import Results, Stats
+from models import Results, Stats, Strategy
+
 
 class Simulator:
 
@@ -269,6 +270,54 @@ class Simulator:
         stats.save()
 
         return res
+
+
+class Launcher:
+    def __init__(self, indexes, params):
+
+        # Indexes should be a list of tickers like "EURUSD=X"
+        self.indexes = indexes
+        # Parameters should be a dict of the parameters to use.
+        self.params = params
+
+    def name_creator(self, ticker):
+        res=f'{ticker}-{self.params["period"]}-{self.params["interval"]}'
+        if self.params["rsi_length"]:
+            res.append('-rsi')
+        if self.params["macd_fast"]:
+            res.append('-macd')
+        if self.params["ema_length"]:
+            res.append('-ema')
+        if self.params["sma_length"]:
+            res.append('-sma')
+        if self.params["trend_line_win"]:
+            res.append('-tl')
+
+        return res
+
+    def strategy_creator(self):
+
+        for ticker in self.indexes:
+
+            strat = Strategy(
+                name=self.name_creator(ticker),
+                ticker=ticker,
+                period=self.params["period"],
+                interval=self.params["interval"],
+                rsi_length=self.params["rsi_length"],
+                rsi_high=self.params["rsi_high"],
+                rsi_low=self.params["rsi_low"],
+                macd_fast=self.params["macd_fast"],
+                macd_slow=self.params["macd_slow"],
+                ema_length=self.params["ema_length"],
+                sma_length=self.params["sma_length"],
+                trend_line_win=self.params["trend_line_win"],
+                trend_lever=self.params["trend_lever"],
+                trend_angle=self.params["trend_angle"],
+                description=self.params["description"],
+            )
+            strat.save()
+
 
 """__________________________________________________________________________________________________________________"""
 
