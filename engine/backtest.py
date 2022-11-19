@@ -353,7 +353,7 @@ class Launcher:
 launcher = Launcher(
     ["EURUSD=X", "EURCHF=X"],
     {
-        "period": "1mo",
+        "period": "50d",
         "interval": "5m",
         "rsi_length": None,
         "rsi_high": None,
@@ -362,9 +362,9 @@ launcher = Launcher(
         "macd_slow": 26,
         "ema_length": 200,
         "sma_length": None,
-        "trend_line_win": 200,
+        "trend_line_win": 100,
         "trend_lever": 100,
-        "trend_angle": 12,
+        "trend_angle": 15,
         "description": "res:sup finder strength = 4"
     }
 )
