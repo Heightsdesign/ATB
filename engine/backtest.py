@@ -43,23 +43,21 @@ class Simulator:
     def simulate_df(self):
 
         self.add_cols(["sell", "buy", "sl", "tp"])
-        print(self.trend_win)
-        print(self.ema)
-        print(self.df.iloc[-1][self.ema])
-        print(self.df.tail(150))
 
         for i in range(len(self.df)):
 
             """Buying position logic"""
 
+            # UNCOMMENT TO USE RSI
             # if self.df.iloc[i][self.xb] == 1 and self.df.iloc[i - 1][self.xb] == 0:
+
+            # UNCOMMENT TO USE MACD
             if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0\
                     and self.df.iloc[i][self.macdh] >= 0.0001:
 
                 # if self.df.iloc[i][self.ema] > self.df.iloc[i]['Close']:
 
-                # print(self.df.iloc[i - self.trend_win])
-                # print(self.df.iloc[i])
+                # UNCOMMENT TO USE TREND EMA TREND ANGLE
                 if i > self.strat.ema_length * 2:
                     if self.tst.get_angle_two_points(
                             self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
@@ -82,14 +80,15 @@ class Simulator:
 
             """Selling position logic"""
 
+            # UNCOMMENT TO USE RSI
             # if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
+
+            # UNCOMMENT TO USE MACD
             if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0\
                     and self.df.iloc[i][self.macdh] <= -0.0001:
 
                 # if self.df.iloc[i][self.ema] < self.df.iloc[i]['Close']:
-                print(self.df.iloc[i - self.trend_win])
-                print(self.df.iloc[i])
-
+                # UNCOMMENT TO USE TREND EMA TREND ANGLE
                 if i > self.strat.ema_length * 2:
                     if self.tst.get_angle_two_points(
                             self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
@@ -140,6 +139,7 @@ class Simulator:
                         "sl": self.df.iloc[i]['sl'],
                         "tp": self.df.iloc[i]['tp'],
                     }
+                    print(position)
                     positions.append(position)
 
             # Code block make sure algo doesn't create position for
@@ -159,6 +159,7 @@ class Simulator:
                         "sl": self.df.iloc[i]['sl'],
                         "tp": self.df.iloc[i]['tp'],
                     }
+                    print(position)
                     positions.append(position)
 
             for pos in positions:
@@ -228,7 +229,7 @@ class Simulator:
                         res.save()
                         positions.remove(pos)
 
-        pprint.pprint(results)
+        # pprint.pprint(results)
         return results
 
     def make_stats(self):
@@ -269,8 +270,7 @@ class Simulator:
 
         return res
 
-
 """__________________________________________________________________________________________________________________"""
 
-# print(Simulator().simulate_df().tail(650))
-print(Simulator(5).make_stats())
+print(Simulator(2).simulate())
+print(Simulator(2).make_stats())

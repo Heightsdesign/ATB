@@ -15,6 +15,7 @@ class BaseModel(Model):
 
 class Strategy(BaseModel):
 
+    name = CharField(max_length=30)
     ticker = CharField(max_length=10)
     period = CharField(max_length=5, null=True)
     interval = CharField(max_length=5, null=True)
@@ -33,6 +34,7 @@ class Strategy(BaseModel):
 
 # create strategy
 strat = Strategy(
+    name="EURUSD-1mo-5m-macd-ema-10",
     ticker="EURUSD=X",
     period="1mo",
     interval="5m",
@@ -75,9 +77,9 @@ class Results(BaseModel):
 pg_db.connect()
 
 # UNCOMMENT TO CREATE TABLES IN DB
-# pg_db.create_tables([Results, Stats])
+# pg_db.create_tables([Strategy, Results, Stats])
 # UNCOMMENT TO CREATE STRATEGY
-
+# strat.save()
 
 
 
