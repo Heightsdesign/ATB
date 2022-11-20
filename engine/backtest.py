@@ -65,7 +65,7 @@ class Simulator:
                 return True
 
     def rsi_sell_condition(self, i):
-        if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0
+        if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
             return True
 
     def macd_sell_condition(self, i):
@@ -102,7 +102,7 @@ class Simulator:
             conditions.append("tl")
 
         return conditions
-    
+
     def simulate_df(self):
 
         self.add_cols(["sell", "buy", "sl", "tp"])
