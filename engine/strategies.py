@@ -55,6 +55,7 @@ class Strat:
         macd = df.ta.macd(close='Close', fast=self.obj.macd_fast, slow=self.obj.macd_slow)
         ema = df.ta.ema(close='Close', length=self.obj.ema_length)
         sma = df.ta.sma(close='Close', length=self.obj.sma_length)
+
         df = pd.concat([df, rsi, macd, ema, sma], axis=1)
         df = df.drop(['Dividends', 'Stock Splits'], axis=1)
 

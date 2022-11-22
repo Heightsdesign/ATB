@@ -2,7 +2,6 @@ import pandas as pd
 import pandas_ta as ta
 import numpy as np
 from datetime import datetime
-import pprint
 from strategies import Strat
 from res_sup_finder import ResSupFinder as rsf
 from models import Results, Stats, Strategy
@@ -10,12 +9,24 @@ from models import Results, Stats, Strategy
 
 class Simulator:
 
+    """The simulator object simulates a given strategy
+    created in the database and takes in its id as argument.
+    The simulator is build like a toolbox with the conditions
+    being the tools. You can easily create new ones by :
+
+    1. Creating the needed argument the db for the Strategy model.
+    2. inserting that data in Strat.create_df() method.
+    3. Setting its string index. ** optional
+    4. Create the condition as a simulator method.
+    5. Insert condition in condition appliers"""
+
     def __init__(self, strategy_id):
 
         self.strategy_id = strategy_id
-        self.strat = Strat(self.strategy_id).obj
+
         self.tst = Strat(self.strategy_id)
         self.df = self.tst.create_strategy_df()
+        self.strat = Strat(self.strategy_id).obj
 
         # Choose resistance, support parameters.
         # The number of candles to consider before [0] and after [1] direction switch
@@ -34,7 +45,7 @@ class Simulator:
         self.trend_win = self.strat.trend_line_win
 
     def add_cols(self, col_names):
-        """Adds empty columns"""
+        """Adds empty columns."""
 
         for col in col_names:
             self.df[col] = np.nan
@@ -42,15 +53,18 @@ class Simulator:
         return self.df
 
     def rsi_buy_condition(self, i):
+        """defines the rsi buying condition."""
         if self.df.iloc[i][self.xb] == 1 and self.df.iloc[i - 1][self.xb] == 0:
             return True
 
     def macd_buy_condition(self, i):
+        """defines the macd buying condition."""
         if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0 \
                 and self.df.iloc[i][self.macdh] >= 0.0001:
             return True
 
     def ema_trend_buy_condition(self, i):
+        """defines the ema buying condition."""
         if i > self.strat.ema_length * 2:
             if self.tst.get_angle_two_points(
                     self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
@@ -58,6 +72,7 @@ class Simulator:
                 return True
 
     def sma_trend_buy_condition(self, i):
+        """defines the sma buying condition."""
         if i > self.strat.sma_length * 2:
             if self.tst.get_angle_two_points(
                     self.df.iloc[i - self.trend_win][self.sma], self.df.iloc[i][self.sma]
@@ -87,21 +102,61 @@ class Simulator:
             ) < self.strat.trend_angle * -1:
                 return True
 
-    def conditions_getter(self):
+    def buying_conditions_applier(self, i):
 
         conditions = []
+        valid_conditions = 0
+
         if self.strat.rsi_high:
             conditions.append("rsi")
+            if self.rsi_buy_condition(i):
+                valid_conditions += 1
+
         elif self.strat.macd_fast:
             conditions.append("macd")
+            if self.macd_buy_condition(i):
+                valid_conditions += 1
+
         elif self.strat.ema_length:
             conditions.append("ema")
+            if self.ema_trend_buy_condition(i):
+                valid_conditions += 1
+
         elif self.strat.sma_length:
             conditions.append("sma")
-        elif self.strat.trend_line_win:
-            conditions.append("tl")
+            if self.sma_trend_buy_condition(i):
+                valid_conditions += 1
 
-        return conditions
+        if valid_conditions == len(conditions):
+            return True
+
+    def selling_conditions_applier(self, i):
+
+        conditions = []
+        valid_conditions = 0
+
+        if self.strat.rsi_high:
+            conditions.append("rsi")
+            if self.rsi_sell_condition(i):
+                valid_conditions += 1
+
+        elif self.strat.macd_fast:
+            conditions.append("macd")
+            if self.macd_sell_condition(i):
+                valid_conditions += 1
+
+        elif self.strat.ema_length:
+            conditions.append("ema")
+            if self.ema_trend_sell_condition(i):
+                valid_conditions += 1
+
+        elif self.strat.sma_length:
+            conditions.append("sma")
+            if self.sma_trend_sell_condition(i):
+                valid_conditions += 1
+
+        if valid_conditions == len(conditions):
+            return True
 
     def simulate_df(self):
 
@@ -172,6 +227,8 @@ class Simulator:
         return self.df
 
     def simulate(self):
+        """Simulate the strategy based on the data
+        from the simulate_df() method."""
 
         self.df = self.simulate_df()
         self.df = self.df.reset_index().rename(columns={"Datetime": "Date"})
@@ -339,6 +396,12 @@ class Simulator:
 
 
 class Launcher:
+
+    """The Launcher is build to launch a strategy over
+    multiple indexes. The 'indexes' to be simulated should be
+    a list of tickers and the strategy parameter should be
+    defined as the 'params'"""
+
     def __init__(self, indexes, params):
 
         # Indexes should be a list of tickers like "EURUSD=X"
@@ -347,6 +410,10 @@ class Launcher:
         self.params = params
 
     def name_creator(self, ticker):
+
+        """Creates a name for the strategy containing its parameters
+        (which makes it unique)"""
+
         res=f'{ticker}-{self.params["period"]}-{self.params["interval"]}'
         if self.params["rsi_length"]:
             res += f'-rsi-{self.params["rsi_length"]}-{self.params["rsi_high"]}-{self.params["rsi_low"]}'
@@ -363,6 +430,8 @@ class Launcher:
 
     def check_duplicates(self, ticker):
 
+        """Checks if strategy has already been tested"""
+
         strat_name = self.name_creator(ticker)
         strat_exists = Strategy.select().where(Strategy.name == strat_name)
         if strat_exists:
@@ -371,7 +440,7 @@ class Launcher:
             return False
 
     def strategies_creator(self):
-        strat_names= []
+        strat_names = []
         for ticker in self.indexes:
             if not self.check_duplicates(ticker):
                 strat = Strategy(
