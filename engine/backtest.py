@@ -30,7 +30,7 @@ class Simulator:
 
         # Choose resistance, support parameters.
         # The number of candles to consider before [0] and after [1] direction switch
-        self.rsf_vals = [4, 3]
+        self.rsf_vals = [self.strat.rsf_n1, self.strat.rsf_n1]
         self.lever = 1
 
         # Setups string indexes
@@ -55,8 +55,7 @@ class Simulator:
         return self.df
 
     def find_lever(self):
-
-        """finds the lever for macdh and trend line angle"""
+        """finds the lever for macdh and trend line angle."""
         shifts = 0
         percentile = 0
         df = self.df.head(600)
@@ -95,7 +94,7 @@ class Simulator:
     def macd_buy_condition(self, i):
         """defines the macd buying condition."""
         if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0 \
-                and self.df.iloc[i][self.macdh] >= 0.01 / self.lever:
+                and self.df.iloc[i][self.macdh] >= 0.02 / self.lever:
             return True
 
     def ema_trend_buy_condition(self, i):
@@ -130,16 +129,37 @@ class Simulator:
             if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
                 return True
 
+    def rsf_buy_condition(self, i):
+        """Identifies supports and resistances to set sl and tp
+        for buying conditions."""
+
+        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
+        if sl:
+            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+        else:
+            sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
+                self.df.iloc[i]['Close'], 2)
+            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+
+        tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
+        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+        return [sl, tp]
+
     def rsi_sell_condition(self, i):
+        """defines the rsi selling condition."""
         if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
             return True
 
     def macd_sell_condition(self, i):
+        """defines the macd selling condition."""
         if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0 \
-                and self.df.iloc[i][self.macdh] <= -0.01 / self.lever:
+                and self.df.iloc[i][self.macdh] <= -0.02 / self.lever:
+            print(self.df.iloc[i][self.macdh])
+            print(-0.02 / self.lever)
             return True
 
     def ema_trend_sell_condition(self, i):
+        """defines the ema sell condition."""
         long_trend = self.tst.get_angle_two_points(
             self.df.iloc[i - self.trend_win][self.ema],
             self.df.iloc[i][self.ema],
@@ -155,6 +175,7 @@ class Simulator:
                 return True
 
     def sma_trend_sell_condition(self, i):
+        """defines the sma sell condition."""
         long_trend = self.tst.get_angle_two_points(
             self.df.iloc[i - self.trend_win][self.sma],
             self.df.iloc[i][self.sma],
@@ -168,6 +189,21 @@ class Simulator:
         if i > self.strat.ema_length * 2:
             if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
                 return True
+
+    def rsf_sell_condition(self, i):
+        """Identifies supports and resistances to set sl and tp
+        for selling conditions"""
+        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
+        if sl:
+            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+        else:
+            sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
+                self.df.iloc[i]['Close'], 4)
+            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+
+        tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
+        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+        return [sl, tp]
 
     def buying_conditions_applier(self, i):
 
@@ -243,38 +279,13 @@ class Simulator:
             """Applies buying position logic"""
             if self.buying_conditions_applier(i):
                 self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
-
-                """Parameters to identify supports and resistances
-                to set sl"""
-
-                sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
-                if sl:
-                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-                else:
-                    sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
-                        self.df.iloc[i]['Close'], 2)
-                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-
-                tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
-                self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+                self.rsf_buy_condition(i)
 
             """Applies selling position logic"""
-
             if self.selling_conditions_applier(i):
                 self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
+                self.rsf_sell_condition(i)
 
-                """Parameters to identify supports and resistances
-                to set sl"""
-                sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
-                if sl:
-                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-                else:
-                    sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
-                        self.df.iloc[i]['Close'], 4)
-                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-
-                tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
-                self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         print(self.df.tail(50))
         return self.df
 
@@ -483,7 +494,11 @@ class Launcher:
             res += f'-sma-{self.params["sma_length"]}'
         if self.params["trend_line_win"]:
             res += f'-tl-{self.params["trend_line_win"]}-{self.params["trend_angle"]}'
-
+            res += f'-stl-{self.params["short_win"]}-{self.params["short_angle"]}'
+        if self.params["rsf_n1"]:
+            res += f'-rsf-{self.params["rsf_n1"]}-{self.params["rsf_n2"]}'
+        if self.params["n_vol_tp"]:
+            res += f'-vol-{self.params["n_vol_tp"]}-{self.params["tp_percent"]}-{self.params["sl_percent"]}'
         return res
 
     def check_duplicates(self, ticker):
@@ -521,7 +536,7 @@ class Launcher:
                     rsf_n2=self.params["rsf_n2"],
                     n_vol_tp=self.params["n_vol_tp"],
                     tp_percentage=self.params["tp_percent"],
-                    sl_percentage =self.params["sl_percent"],
+                    sl_percentage=self.params["sl_percent"],
                     description=self.params["description"],
                 )
                 strat.save()
@@ -542,9 +557,9 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["JPY=X"],
+    ["EURUSD=X"],
     {
-        "period": "10d",
+        "period": "20d",
         "interval": "5m",
         "rsi_length": None,
         "rsi_high": None,
@@ -556,7 +571,7 @@ launcher = Launcher(
         "trend_line_win": 75,
         "trend_angle": 15,
         "short_win": 50,
-        "short_angle": 10,
+        "short_angle": 15,
         "rsf_n1": 4,
         "rsf_n2": 3,
         "n_vol_tp": None,
