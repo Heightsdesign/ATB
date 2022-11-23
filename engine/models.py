@@ -28,7 +28,14 @@ class Strategy(BaseModel):
     sma_length = IntegerField(null=True)
     trend_line_win = IntegerField(null=True)
     trend_angle = DecimalField(max_digits=5, decimal_places=2, null=True)
+    short_trend_win = IntegerField(null=True)
+    short_trend_angle = DecimalField(max_digits=5, decimal_places=2, null=True)
     description = TextField(null=True)
+    rsf_n1 = IntegerField(null=True)
+    rsf_n2 = IntegerField(null=True)
+    n_vol_tp = IntegerField(null=True)
+    tp_percentage = IntegerField(null=True)
+    sl_percentage = IntegerField(null=True)
 
 
 # create strategy

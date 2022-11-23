@@ -44,6 +44,7 @@ class Simulator:
         self.ema = f"EMA_{self.strat.ema_length}"
         self.sma = f"EMA_{self.strat.sma_length}"
         self.trend_win = self.strat.trend_line_win
+        self.short_win = self.strat.short_trend_win
 
     def add_cols(self, col_names):
         """Adds empty columns."""
@@ -99,22 +100,34 @@ class Simulator:
 
     def ema_trend_buy_condition(self, i):
         """defines the ema buying condition."""
-        if i > self.strat.ema_length * 2:
-            if self.tst.get_angle_two_points(
+        long_trend = self.tst.get_angle_two_points(
                     self.df.iloc[i - self.trend_win][self.ema],
                     self.df.iloc[i][self.ema],
-                    self.lever
-            ) > self.strat.trend_angle:
+                    self.lever)
+
+        short_trend = self.tst.get_angle_two_points(
+                    self.df.iloc[i - self.short_win][self.ema],
+                    self.df.iloc[i][self.ema],
+                    self.lever)
+
+        if i > self.strat.ema_length * 2:
+            if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
                 return True
 
     def sma_trend_buy_condition(self, i):
         """defines the sma buying condition."""
-        if i > self.strat.sma_length * 2:
-            if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.sma],
-                    self.df.iloc[i][self.sma],
-                    self.lever
-            ) > self.strat.trend_angle:
+        long_trend = self.tst.get_angle_two_points(
+            self.df.iloc[i - self.trend_win][self.sma],
+            self.df.iloc[i][self.sma],
+            self.lever)
+
+        short_trend = self.tst.get_angle_two_points(
+            self.df.iloc[i - self.short_win][self.sma],
+            self.df.iloc[i][self.sma],
+            self.lever)
+
+        if i > self.strat.ema_length * 2:
+            if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
                 return True
 
     def rsi_sell_condition(self, i):
@@ -127,21 +140,33 @@ class Simulator:
             return True
 
     def ema_trend_sell_condition(self, i):
+        long_trend = self.tst.get_angle_two_points(
+            self.df.iloc[i - self.trend_win][self.ema],
+            self.df.iloc[i][self.ema],
+            self.lever)
+
+        short_trend = self.tst.get_angle_two_points(
+            self.df.iloc[i - self.short_win][self.ema],
+            self.df.iloc[i][self.ema],
+            self.lever)
+
         if i > self.strat.ema_length * 2:
-            if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.ema],
-                    self.df.iloc[i][self.ema],
-                    self.lever
-            ) < self.strat.trend_angle * -1:
+            if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
                 return True
 
     def sma_trend_sell_condition(self, i):
-        if i > self.strat.sma_length * 2:
-            if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.sma],
-                    self.df.iloc[i][self.sma],
-                    self.lever
-            ) < self.strat.trend_angle * -1:
+        long_trend = self.tst.get_angle_two_points(
+            self.df.iloc[i - self.trend_win][self.sma],
+            self.df.iloc[i][self.sma],
+            self.lever)
+
+        short_trend = self.tst.get_angle_two_points(
+            self.df.iloc[i - self.short_win][self.sma],
+            self.df.iloc[i][self.sma],
+            self.lever)
+
+        if i > self.strat.ema_length * 2:
+            if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
                 return True
 
     def buying_conditions_applier(self, i):
@@ -490,6 +515,13 @@ class Launcher:
                     sma_length=self.params["sma_length"],
                     trend_line_win=self.params["trend_line_win"],
                     trend_angle=self.params["trend_angle"],
+                    short_trend_win=self.params["short_win"],
+                    short_trend_angle=self.params["short_angle"],
+                    rsf_n1=self.params["rsf_n1"],
+                    rsf_n2=self.params["rsf_n2"],
+                    n_vol_tp=self.params["n_vol_tp"],
+                    tp_percentage=self.params["tp_percent"],
+                    sl_percentage =self.params["sl_percent"],
                     description=self.params["description"],
                 )
                 strat.save()
@@ -523,6 +555,13 @@ launcher = Launcher(
         "sma_length": None,
         "trend_line_win": 75,
         "trend_angle": 15,
+        "short_win": 50,
+        "short_angle": 10,
+        "rsf_n1": 4,
+        "rsf_n2": 3,
+        "n_vol_tp": None,
+        "tp_percent": None,
+        "sl_percent": None,
         "description": "res:sup finder strength = 4"
     }
 )
