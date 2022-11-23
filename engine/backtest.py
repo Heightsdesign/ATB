@@ -112,22 +112,23 @@ class Simulator:
             if self.rsi_buy_condition(i):
                 valid_conditions += 1
 
-        elif self.strat.macd_fast:
+        if self.strat.macd_fast:
             conditions.append("macd")
             if self.macd_buy_condition(i):
                 valid_conditions += 1
 
-        elif self.strat.ema_length:
+        if self.strat.ema_length:
             conditions.append("ema")
             if self.ema_trend_buy_condition(i):
                 valid_conditions += 1
 
-        elif self.strat.sma_length:
+        if self.strat.sma_length:
             conditions.append("sma")
             if self.sma_trend_buy_condition(i):
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
+            print(conditions)
             return True
 
     def selling_conditions_applier(self, i):
@@ -140,17 +141,17 @@ class Simulator:
             if self.rsi_sell_condition(i):
                 valid_conditions += 1
 
-        elif self.strat.macd_fast:
-            conditions.append("macd")
-            if self.macd_sell_condition(i):
-                valid_conditions += 1
-
-        elif self.strat.ema_length:
+        if self.strat.ema_length:
             conditions.append("ema")
             if self.ema_trend_sell_condition(i):
                 valid_conditions += 1
 
-        elif self.strat.sma_length:
+        if self.strat.macd_fast:
+            conditions.append("macd")
+            if self.macd_sell_condition(i):
+                valid_conditions += 1
+
+        if self.strat.sma_length:
             conditions.append("sma")
             if self.sma_trend_sell_condition(i):
                 valid_conditions += 1
@@ -160,70 +161,46 @@ class Simulator:
 
     def simulate_df(self):
 
-        self.add_cols(["sell", "buy", "sl", "tp"])
+        self.add_cols(["sell", "buy", "sl", "tp", "trend_angle"])
 
         for i in range(len(self.df)):
 
-            """Buying position logic"""
+            """Applies buying position logic"""
+            if self.buying_conditions_applier(i):
+                self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
 
-            # UNCOMMENT TO USE RSI
-            # if self.df.iloc[i][self.xb] == 1 and self.df.iloc[i - 1][self.xb] == 0:
+                """Parameters to identify supports and resistances
+                to set sl"""
 
-            # UNCOMMENT TO USE MACD
-            if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0\
-                    and self.df.iloc[i][self.macdh] >= 0.0001:
+                sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
+                if sl:
+                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+                else:
+                    sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
+                        self.df.iloc[i]['Close'], 2)
+                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
-                # UNCOMMENT TO USE TREND EMA TREND ANGLE
-                if i > self.strat.ema_length * 2:
-                    if self.tst.get_angle_two_points(
-                            self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
-                    ) > self.strat.trend_angle:
+                tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
+                self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
 
-                        self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
+            """Applies selling position logic"""
 
-                        """Parameters to identify supports and resistances
-                        to set sl"""
-                        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
-                        if sl:
-                            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-                        else:
-                            sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
-                                self.df.iloc[i]['Close'], 2)
-                            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+            if self.selling_conditions_applier(i):
+                self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
 
-                        tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
-                        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+                """Parameters to identify supports and resistances
+                to set sl"""
+                sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
+                if sl:
+                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+                else:
+                    sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
+                        self.df.iloc[i]['Close'], 4)
+                    self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
-            """Selling position logic"""
-
-            # UNCOMMENT TO USE RSI
-            # if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
-
-            # UNCOMMENT TO USE MACD
-            if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0\
-                    and self.df.iloc[i][self.macdh] <= -0.0001:
-
-                # UNCOMMENT TO USE TREND EMA TREND ANGLE
-                if i > self.strat.ema_length * 2:
-                    if self.tst.get_angle_two_points(
-                            self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
-                    ) < self.strat.trend_angle * -1:
-
-                        self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
-
-                        """Parameters to identify supports and resistances
-                        to set sl"""
-                        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
-                        if sl:
-                            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-                        else:
-                            sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
-                                self.df.iloc[i]['Close'], 4)
-                            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-
-                        tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
-                        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
-
+                tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
+                self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+        print(self.df.tail(50))
         return self.df
 
     def simulate(self):
@@ -388,7 +365,7 @@ class Simulator:
 
 
 """__________________________________________________________________________________________________________________"""
-
+# print(Simulator(2).simulate_df().tail(20))
 # print(Simulator(2).simulate())
 # print(Simulator(2).make_stats())
 
@@ -478,7 +455,7 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["msft", "aapl", "tsla"],
+    ["JPY=X", "GBPUSD=X", "AUDUSD=X", "NZDUSD=X", "EURJPY=X", "GBPJPY=X", "EURGBP=X", "EURCAD=X", "EURSEK=X", "EURCHF=X"],
     {
         "period": "50d",
         "interval": "5m",
@@ -490,8 +467,8 @@ launcher = Launcher(
         "ema_length": 200,
         "sma_length": None,
         "trend_line_win": 100,
-        "trend_lever": 1,
-        "trend_angle": 16,
+        "trend_lever": 100,
+        "trend_angle": 15,
         "description": "res:sup finder strength = 4"
     }
 )
