@@ -31,6 +31,7 @@ class Simulator:
         # Choose resistance, support parameters.
         # The number of candles to consider before [0] and after [1] direction switch
         self.rsf_vals = [4, 3]
+        self.lever = 1
 
         # Setups string indexes
         self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_{self.strat.macd_fast}"
@@ -52,6 +53,39 @@ class Simulator:
 
         return self.df
 
+    def find_lever(self):
+
+        """finds the lever for macdh and trend line angle"""
+        shifts = 0
+        percentile = 0
+        df = self.df.head(600)
+        for i in range(len(df) - 1):
+            shift = df.iloc[i]["Close"] - df.iloc[i + 1]["Close"]
+            shifts += abs(shift)
+
+        avg_shifts = shifts / len(df)
+        avg_shifts = str(round(avg_shifts, 6)).replace(".", "")
+
+        for digit in avg_shifts:
+            if digit == "0":
+                percentile += 1
+            else:
+                break
+
+        print(percentile)
+        print(avg_shifts)
+
+        if percentile == 4:
+            self.lever = 100
+        elif percentile == 3:
+            self.lever = 10
+        elif self.lever == 2:
+            self.lever = 1
+        else:
+            self.lever = 1
+
+        return self.lever
+
     def rsi_buy_condition(self, i):
         """defines the rsi buying condition."""
         if self.df.iloc[i][self.xb] == 1 and self.df.iloc[i - 1][self.xb] == 0:
@@ -60,14 +94,16 @@ class Simulator:
     def macd_buy_condition(self, i):
         """defines the macd buying condition."""
         if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0 \
-                and self.df.iloc[i][self.macdh] >= 0.0001:
+                and self.df.iloc[i][self.macdh] >= 0.01 / self.lever:
             return True
 
     def ema_trend_buy_condition(self, i):
         """defines the ema buying condition."""
         if i > self.strat.ema_length * 2:
             if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
+                    self.df.iloc[i - self.trend_win][self.ema],
+                    self.df.iloc[i][self.ema],
+                    self.lever
             ) > self.strat.trend_angle:
                 return True
 
@@ -75,7 +111,9 @@ class Simulator:
         """defines the sma buying condition."""
         if i > self.strat.sma_length * 2:
             if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.sma], self.df.iloc[i][self.sma]
+                    self.df.iloc[i - self.trend_win][self.sma],
+                    self.df.iloc[i][self.sma],
+                    self.lever
             ) > self.strat.trend_angle:
                 return True
 
@@ -85,20 +123,24 @@ class Simulator:
 
     def macd_sell_condition(self, i):
         if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0 \
-                and self.df.iloc[i][self.macdh] <= -0.0001:
+                and self.df.iloc[i][self.macdh] <= -0.01 / self.lever:
             return True
 
     def ema_trend_sell_condition(self, i):
         if i > self.strat.ema_length * 2:
             if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.ema], self.df.iloc[i][self.ema]
+                    self.df.iloc[i - self.trend_win][self.ema],
+                    self.df.iloc[i][self.ema],
+                    self.lever
             ) < self.strat.trend_angle * -1:
                 return True
 
     def sma_trend_sell_condition(self, i):
         if i > self.strat.sma_length * 2:
             if self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.sma], self.df.iloc[i][self.sma]
+                    self.df.iloc[i - self.trend_win][self.sma],
+                    self.df.iloc[i][self.sma],
+                    self.lever
             ) < self.strat.trend_angle * -1:
                 return True
 
@@ -162,8 +204,16 @@ class Simulator:
     def simulate_df(self):
 
         self.add_cols(["sell", "buy", "sl", "tp", "trend_angle"])
+        self.find_lever()
 
         for i in range(len(self.df)):
+
+            trend_angle = self.tst.get_angle_two_points(
+                    self.df.iloc[i - self.trend_win][self.ema],
+                    self.df.iloc[i][self.ema],
+                    self.lever
+            )
+            self.df.iloc[i, self.df.columns.get_loc('trend_angle')] = trend_angle
 
             """Applies buying position logic"""
             if self.buying_conditions_applier(i):
@@ -231,6 +281,7 @@ class Simulator:
                         "open_val": self.df.iloc[i + 1]['Open'],
                         "sl": self.df.iloc[i]['sl'],
                         "tp": self.df.iloc[i]['tp'],
+                        "trend_angle": self.df.iloc[i]['trend_angle'],
                     }
                     print(position)
                     positions.append(position)
@@ -251,6 +302,7 @@ class Simulator:
                         "open_val": self.df.iloc[i + 1]['Open'],
                         "sl": self.df.iloc[i]['sl'],
                         "tp": self.df.iloc[i]['tp'],
+                        "trend_angle": self.df.iloc[i]['trend_angle'],
                     }
                     print(position)
                     positions.append(position)
@@ -267,6 +319,7 @@ class Simulator:
                             loss=0,
                             profit=round(profit, 9),
                             date=pos["date"],
+                            trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
                         )
                         # results.append(res)
@@ -283,6 +336,7 @@ class Simulator:
                             loss=1,
                             profit=round(loss, 9),
                             date=pos["date"],
+                            trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
                         )
                         # results.append(res)
@@ -300,6 +354,7 @@ class Simulator:
                             loss=0,
                             profit=round(profit, 9),
                             date=pos["date"],
+                            trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
                         )
                         # results.append(res)
@@ -316,6 +371,7 @@ class Simulator:
                             loss=1,
                             profit=round(loss, 9),
                             date=pos["date"],
+                            trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
                         )
                         # results.append(res)
@@ -368,7 +424,7 @@ class Simulator:
 # print(Simulator(2).simulate_df().tail(20))
 # print(Simulator(2).simulate())
 # print(Simulator(2).make_stats())
-
+# print(Simulator(38).find_lever())
 """__________________________________________________________________________________________________________________"""
 
 
@@ -401,7 +457,7 @@ class Launcher:
         if self.params["sma_length"]:
             res += f'-sma-{self.params["sma_length"]}'
         if self.params["trend_line_win"]:
-            res += f'-tl-{self.params["trend_line_win"]}-{self.params["trend_lever"]}-{self.params["trend_angle"]}'
+            res += f'-tl-{self.params["trend_line_win"]}-{self.params["trend_angle"]}'
 
         return res
 
@@ -433,7 +489,6 @@ class Launcher:
                     ema_length=self.params["ema_length"],
                     sma_length=self.params["sma_length"],
                     trend_line_win=self.params["trend_line_win"],
-                    trend_lever=self.params["trend_lever"],
                     trend_angle=self.params["trend_angle"],
                     description=self.params["description"],
                 )
@@ -455,9 +510,9 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["JPY=X", "GBPUSD=X", "AUDUSD=X", "NZDUSD=X", "EURJPY=X", "GBPJPY=X", "EURGBP=X", "EURCAD=X", "EURSEK=X", "EURCHF=X"],
+    ["JPY=X"],
     {
-        "period": "50d",
+        "period": "10d",
         "interval": "5m",
         "rsi_length": None,
         "rsi_high": None,
@@ -466,8 +521,7 @@ launcher = Launcher(
         "macd_slow": 26,
         "ema_length": 200,
         "sma_length": None,
-        "trend_line_win": 100,
-        "trend_lever": 100,
+        "trend_line_win": 75,
         "trend_angle": 15,
         "description": "res:sup finder strength = 4"
     }

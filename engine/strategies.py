@@ -65,14 +65,14 @@ class Strat:
         """Gets the shift percentage between two values"""
         return (new_val - old_val) / old_val * 100
 
-    def get_angle_two_points(self, og_val, next_val):
+    def get_angle_two_points(self, og_val, next_val, lever):
         """Get the angle in degrees between two points
         use the trend lever to get right values"""
 
         myradians = atan2(next_val - og_val, 1)
         mydegrees = degrees(myradians)
 
-        return mydegrees * self.obj.trend_lever
+        return mydegrees * lever
 
     def get_trend_line_angle(self):
         """ Get the trend line angle"""
