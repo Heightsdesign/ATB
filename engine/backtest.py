@@ -439,7 +439,7 @@ class Simulator:
             "num_positions": num_positions,
             "num_wins": num_wins,
             "num_losses": num_losses,
-            "win_ratio" : win_ratio,
+            "win_ratio": win_ratio,
             "total_profit": total_profit
         }
 
@@ -483,13 +483,13 @@ class Launcher:
         """Creates a name for the strategy containing its parameters
         (which makes it unique)"""
 
-        res=f'{ticker}-{self.params["period"]}-{self.params["interval"]}'
+        res = f'{ticker}-{self.params["period"]}-{self.params["interval"]}'
         if self.params["rsi_length"]:
             res += f'-rsi-{self.params["rsi_length"]}-{self.params["rsi_high"]}-{self.params["rsi_low"]}'
         if self.params["macd_fast"]:
-            res +=f'-macd-{self.params["macd_fast"]}-{self.params["macd_slow"]}'
+            res += f'-macd-{self.params["macd_fast"]}-{self.params["macd_slow"]}'
         if self.params["ema_length"]:
-            res +=f'-ema-{self.params["ema_length"]}'
+            res += f'-ema-{self.params["ema_length"]}'
         if self.params["sma_length"]:
             res += f'-sma-{self.params["sma_length"]}'
         if self.params["trend_line_win"]:
