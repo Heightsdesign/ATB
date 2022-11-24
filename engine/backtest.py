@@ -156,15 +156,15 @@ class Simulator:
         tp_val = avg_shift * self.strat.tp_percentage / 100
 
         if direction == 1:
-            tp = self.df.iloc[i]['Close'] + tp_val
-            sl = self.df.iloc[i]['Close'] - tp_val * self.strat.sl_percentage / 100
+            tp = self.df.iloc[i + 1]['Open'] + tp_val
+            sl = self.df.iloc[i + 1]['Open'] - tp_val * self.strat.sl_percentage / 100
 
             self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
             self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
         elif direction == 2:
-            tp = self.df.iloc[i]['Close'] - tp_val
-            sl = self.df.iloc[i]['Close'] + tp_val * self.strat.sl_percentage / 100
+            tp = self.df.iloc[i + 1]['Open'] - tp_val
+            sl = self.df.iloc[i + 1]['Open'] + tp_val * self.strat.sl_percentage / 100
 
             self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
             self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
@@ -585,7 +585,7 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["CAD=X", "NZDUSD=X"],
+    ["AUDUSD=X"],
     {
         "period": "50d",
         "interval": "5m",
@@ -603,7 +603,7 @@ launcher = Launcher(
         "rsf_n1": None,
         "rsf_n2": None,
         "n_vol_tp": 100,
-        "tp_percent": 80,
+        "tp_percent": 120,
         "sl_percent": 50,
         "description": "res:sup finder strength = 4"
     }
