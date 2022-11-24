@@ -148,13 +148,18 @@ class Simulator:
     def retracement_bar_buy_condition(self, i):
 
         whole_bar = self.df.iloc[i]['High'] - self.df.iloc[i]['Low']
+
         if self.df.iloc[i]['Open'] > self.df.iloc[i]['Close']:
             retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Open']
+            if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
+                print(retracement)
+                return True
+
         elif self.df.iloc[i]['Open'] < self.df.iloc[i]['Close']:
             retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Close']
-
-        if whole_bar * retracement / 100 > 45:
-            return True
+            if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
+                print(retracement)
+                return True
 
     def vol_tp_condition(self, i, direction):
 
@@ -240,6 +245,21 @@ class Simulator:
         self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         return [sl, tp]
 
+    def retracement_bar_sell_condition(self, i):
+
+        whole_bar = self.df.iloc[i]['High'] - self.df.iloc[i]['Low']
+        if self.df.iloc[i]['Close'] < self.df.iloc[i]['Open']:
+            retracement = self.df.iloc[i]['Close'] - self.df.iloc[i]['Low']
+            if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
+                print(retracement)
+                return True
+
+        elif self.df.iloc[i]['Close'] > self.df.iloc[i]['Open']:
+            retracement = self.df.iloc[i]['Open'] - self.df.iloc[i]['Low']
+            if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
+                print(retracement)
+                return True
+
     def buying_conditions_applier(self, i):
 
         conditions = []
@@ -263,6 +283,11 @@ class Simulator:
         if self.strat.sma_length:
             conditions.append("sma")
             if self.sma_trend_buy_condition(i):
+                valid_conditions += 1
+
+        if self.strat.retracement_bar_val:
+            conditions.append("rbv")
+            if self.retracement_bar_buy_condition(i):
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
@@ -291,6 +316,11 @@ class Simulator:
         if self.strat.sma_length:
             conditions.append("sma")
             if self.sma_trend_sell_condition(i):
+                valid_conditions += 1
+
+        if self.strat.retracement_bar_val:
+            conditions.append("rbv")
+            if self.retracement_bar_sell_condition(i):
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
@@ -576,7 +606,9 @@ class Launcher:
                     n_vol_tp=self.params["n_vol_tp"],
                     tp_percentage=self.params["tp_percent"],
                     sl_percentage=self.params["sl_percent"],
+                    retracement_bar_val=self.params["rbv"],
                     description=self.params["description"],
+
                 )
                 strat.save()
                 strat_names.append(self.name_creator(ticker))
@@ -596,26 +628,27 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["AUDUSD=X"],
+    ["EURUSD=X"],
     {
         "period": "50d",
         "interval": "5m",
         "rsi_length": None,
         "rsi_high": None,
         "rsi_low": None,
-        "macd_fast": 9,
-        "macd_slow": 26,
+        "macd_fast": None,
+        "macd_slow": None,
         "ema_length": 200,
         "sma_length": None,
         "trend_line_win": 100,
-        "trend_angle": 15,
+        "trend_angle": 30,
         "short_win": 100,
-        "short_angle": 10,
+        "short_angle": 45,
         "rsf_n1": None,
         "rsf_n2": None,
         "n_vol_tp": 100,
-        "tp_percent": 120,
+        "tp_percent": 100,
         "sl_percent": 50,
+        "rbv": 45,
         "description": "res:sup finder strength = 4"
     }
 )
