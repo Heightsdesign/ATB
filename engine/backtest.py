@@ -145,6 +145,17 @@ class Simulator:
         self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         return [sl, tp]
 
+    def retracement_bar_buy_condition(self, i):
+
+        whole_bar = self.df.iloc[i]['High'] - self.df.iloc[i]['Low']
+        if self.df.iloc[i]['Open'] > self.df.iloc[i]['Close']:
+            retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Open']
+        elif self.df.iloc[i]['Open'] < self.df.iloc[i]['Close']:
+            retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Close']
+
+        if whole_bar * retracement / 100 > 45:
+            return True
+
     def vol_tp_condition(self, i, direction):
 
         shifts = 0
@@ -598,7 +609,7 @@ launcher = Launcher(
         "sma_length": None,
         "trend_line_win": 100,
         "trend_angle": 15,
-        "short_win": 50,
+        "short_win": 100,
         "short_angle": 10,
         "rsf_n1": None,
         "rsf_n2": None,
