@@ -94,7 +94,7 @@ class Simulator:
     def macd_buy_condition(self, i):
         """defines the macd buying condition."""
         if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0 \
-                and self.df.iloc[i][self.macdh] >= 0.02 / self.lever:
+                and self.df.iloc[i][self.macdh] >= 0.01 / self.lever:
             return True
 
     def ema_trend_buy_condition(self, i):
@@ -145,6 +145,32 @@ class Simulator:
         self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         return [sl, tp]
 
+    def vol_tp_condition(self, i, direction):
+
+        shifts = 0
+        for val in range(self.strat.n_vol_tp - 1):
+            shift = self.df.iloc[i - self.strat.n_vol_tp + val]['Close'] - self.df.iloc[i - self.strat.n_vol_tp + val - 1]['Close']
+            shifts += abs(shift)
+
+        avg_shift = shifts / self.strat.n_vol_tp
+        tp_val = avg_shift * self.strat.tp_percentage / 100
+
+        if direction == 1:
+            tp = self.df.iloc[i]['Close'] + tp_val
+            sl = self.df.iloc[i]['Close'] - tp_val * self.strat.sl_percentage / 100
+
+            self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+
+        elif direction == 2:
+            tp = self.df.iloc[i]['Close'] - tp_val
+            sl = self.df.iloc[i]['Close'] + tp_val * self.strat.sl_percentage / 100
+
+            self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+
+        return [sl, tp]
+
     def rsi_sell_condition(self, i):
         """defines the rsi selling condition."""
         if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
@@ -153,9 +179,7 @@ class Simulator:
     def macd_sell_condition(self, i):
         """defines the macd selling condition."""
         if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0 \
-                and self.df.iloc[i][self.macdh] <= -0.02 / self.lever:
-            print(self.df.iloc[i][self.macdh])
-            print(-0.02 / self.lever)
+                and self.df.iloc[i][self.macdh] <= -0.01 / self.lever:
             return True
 
     def ema_trend_sell_condition(self, i):
@@ -231,7 +255,6 @@ class Simulator:
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
-            print(conditions)
             return True
 
     def selling_conditions_applier(self, i):
@@ -279,14 +302,19 @@ class Simulator:
             """Applies buying position logic"""
             if self.buying_conditions_applier(i):
                 self.df.iloc[i, self.df.columns.get_loc('buy')] = 1
-                self.rsf_buy_condition(i)
+                if self.strat.rsf_n1:
+                    self.rsf_buy_condition(i)
+                elif self.strat.n_vol_tp:
+                    self.vol_tp_condition(i, 1)
 
             """Applies selling position logic"""
             if self.selling_conditions_applier(i):
                 self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
-                self.rsf_sell_condition(i)
+                if self.strat.rsf_n1:
+                    self.rsf_sell_condition(i)
+                elif self.strat.n_vol_tp:
+                    self.vol_tp_condition(i, 2)
 
-        print(self.df.tail(50))
         return self.df
 
     def simulate(self):
@@ -367,7 +395,7 @@ class Simulator:
                         res = Results(
                             direction=1,
                             open_val=round(pos["open_val"], 9),
-                            close_val=round(pos["tp"], 9),
+                            close_val=round(pos["sl"], 9),
                             win=0,
                             loss=1,
                             profit=round(loss, 9),
@@ -402,7 +430,7 @@ class Simulator:
                         res = Results(
                             direction=0,
                             open_val=round(pos["open_val"], 9),
-                            close_val=round(pos["tp"], 9),
+                            close_val=round(pos["sl"], 9),
                             win=0,
                             loss=1,
                             profit=round(loss, 9),
@@ -557,9 +585,9 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["EURUSD=X"],
+    ["CAD=X", "NZDUSD=X"],
     {
-        "period": "20d",
+        "period": "50d",
         "interval": "5m",
         "rsi_length": None,
         "rsi_high": None,
@@ -568,15 +596,15 @@ launcher = Launcher(
         "macd_slow": 26,
         "ema_length": 200,
         "sma_length": None,
-        "trend_line_win": 75,
+        "trend_line_win": 100,
         "trend_angle": 15,
         "short_win": 50,
-        "short_angle": 15,
-        "rsf_n1": 4,
-        "rsf_n2": 3,
-        "n_vol_tp": None,
-        "tp_percent": None,
-        "sl_percent": None,
+        "short_angle": 10,
+        "rsf_n1": None,
+        "rsf_n2": None,
+        "n_vol_tp": 100,
+        "tp_percent": 80,
+        "sl_percent": 50,
         "description": "res:sup finder strength = 4"
     }
 )
