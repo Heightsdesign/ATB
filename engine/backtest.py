@@ -502,7 +502,7 @@ class Simulator:
                 num_losses += 1
             total_profit += pos.profit
 
-        win_ratio = num_wins / num_losses * 100
+        win_ratio = num_wins / len(positions) * 100
 
         res = {
             "num_positions": num_positions,
@@ -628,7 +628,7 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["EURUSD=X"],
+    ["GBPUSD=X", "EURGBP=X", "CAD=X", "EURCAD=X", "EURCHF=X"],
     {
         "period": "50d",
         "interval": "5m",
@@ -642,7 +642,7 @@ launcher = Launcher(
         "trend_line_win": 100,
         "trend_angle": 30,
         "short_win": 100,
-        "short_angle": 45,
+        "short_angle": 25,
         "rsf_n1": None,
         "rsf_n2": None,
         "n_vol_tp": 100,
