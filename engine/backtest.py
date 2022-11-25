@@ -72,9 +72,6 @@ class Simulator:
             else:
                 break
 
-        print(percentile)
-        print(avg_shifts)
-
         if percentile == 4:
             self.lever = 100
         elif percentile == 3:
@@ -152,13 +149,11 @@ class Simulator:
         if self.df.iloc[i]['Open'] > self.df.iloc[i]['Close']:
             retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Open']
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
-                print(retracement)
                 return True
 
         elif self.df.iloc[i]['Open'] < self.df.iloc[i]['Close']:
             retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Close']
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
-                print(retracement)
                 return True
 
     def vol_tp_condition(self, i, direction):
@@ -251,13 +246,11 @@ class Simulator:
         if self.df.iloc[i]['Close'] < self.df.iloc[i]['Open']:
             retracement = self.df.iloc[i]['Close'] - self.df.iloc[i]['Low']
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
-                print(retracement)
                 return True
 
         elif self.df.iloc[i]['Close'] > self.df.iloc[i]['Open']:
             retracement = self.df.iloc[i]['Open'] - self.df.iloc[i]['Low']
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
-                print(retracement)
                 return True
 
     def buying_conditions_applier(self, i):
@@ -540,12 +533,13 @@ class Launcher:
     a list of tickers and the strategy parameter should be
     defined as the 'params'"""
 
-    def __init__(self, indexes, params):
+    def __init__(self, indexes, params, tick_file=None):
 
         # Indexes should be a list of tickers like "EURUSD=X"
         self.indexes = indexes
         # Parameters should be a dict of the parameters to use.
         self.params = params
+        self.tick_file = tick_file
 
     def name_creator(self, ticker):
 
@@ -616,6 +610,13 @@ class Launcher:
         return strat_names
 
     def launch(self):
+
+        if self.tick_file:
+            self.indexes = []
+            with open(self.tick_file, 'r') as f:
+                for line in f:
+                    self.indexes.append(line.replace('\n', ''))
+
         strat_names = self.strategies_creator()
 
         for name in strat_names:
@@ -650,7 +651,8 @@ launcher = Launcher(
         "sl_percent": 50,
         "rbv": 45,
         "description": "res:sup finder strength = 4"
-    }
+    },
+    'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
 # print(launcher.strategies_creator())
