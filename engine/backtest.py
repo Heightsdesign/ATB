@@ -620,10 +620,14 @@ class Launcher:
         strat_names = self.strategies_creator()
 
         for name in strat_names:
-            strat = Strategy.get(name=name)
-            print(strat.id, strat.ticker)
-            Simulator(strat.id).simulate()
-            Simulator(strat.id).make_stats()
+            try:
+                strat = Strategy.get(name=name)
+                print(strat.id, strat.ticker)
+                Simulator(strat.id).simulate()
+                Simulator(strat.id).make_stats()
+            except ZeroDivisionError:
+                print("Not enough values")
+                continue
 
 
 """__________________________________________________________________________________________________________________"""
