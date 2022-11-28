@@ -39,6 +39,7 @@ Mako==1.2.3
 MarkupSafe==2.1.1
 matplotlib==3.6.1
 matplotlib-inline==0.1.6
+MetaTrader5==5.0.43
 multitasking==0.0.11
 mypy-extensions==0.4.3
 nest-asyncio==1.5.6
