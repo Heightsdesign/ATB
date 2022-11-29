@@ -323,6 +323,8 @@ class Simulator:
 
         self.add_cols(["sell", "buy", "sl", "tp", "trend_angle"])
         self.find_lever()
+        self.strat.lever = self.lever
+        self.strat.save()
 
         for i in range(len(self.df)):
 

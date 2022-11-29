@@ -37,7 +37,7 @@ class Strategy(BaseModel):
     tp_percentage = IntegerField(null=True)
     sl_percentage = IntegerField(null=True)
     retracement_bar_val = IntegerField(null=True)
-
+    lever = IntegerField(null=True)
 
 # create strategy
 strat = Strategy(
@@ -84,7 +84,7 @@ class Results(BaseModel):
 pg_db.connect()
 
 # UNCOMMENT TO CREATE TABLES IN DB
-# pg_db.create_tables([Strategy, Results, Stats])
+pg_db.create_tables([Strategy, Results, Stats])
 # UNCOMMENT TO CREATE STRATEGY
 # strat.save()
 

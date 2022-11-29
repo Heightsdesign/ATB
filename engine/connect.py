@@ -1,12 +1,21 @@
 import MetaTrader5 as mt
 
-mt.initialize()
-
+# Demo Account
 login = 41792961
 password = 'e9w3Ef2zL2Hl'
 server = 'AdmiralMarkets-Demo'
 
-mt.login(login, password, server)
 
-account_info = mt.account_info()
-print(account_info)
+def mt_connect():
+    mt.initialize()
+    mt.login(login, password, server)
+
+
+def account_info():
+    mt_connect()
+    account_info = mt.account_info()
+    return account_info
+
+
+balance = account_info().balance
+print(balance)
