@@ -2,11 +2,36 @@ import time
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
-from connect import balance
+import MetaTrader5 as mt
 
 from res_sup_finder import ResSupFinder as rsf
 from models import Strategy, Stats, Results
 from strategies import Strat
+
+# Demo Account
+login = 41792961
+password = 'e9w3Ef2zL2Hl'
+server = 'AdmiralMarkets-Demo'
+
+
+def mt_connect():
+    mt.initialize()
+    mt.login(login, password, server)
+
+
+def account_info():
+    mt_connect()
+    account_info = mt.account_info()
+    return account_info
+
+
+def get_price(symbol):
+    mt_connect()
+    price = mt.symbol_info_tick(symbol).ask
+    return price
+
+
+balance = account_info().balance
 
 
 class ToolBox:
@@ -52,7 +77,7 @@ class ToolBox:
 
     def get_data_period(self):
 
-        min_num_candles = self.strat.trend_line_win * 4
+        min_num_candles = self.strat.trend_line_win * 8
         num_mins = min_num_candles * 5
         num_hours = num_mins / 60
         num_days = num_hours / 24
@@ -67,30 +92,32 @@ class ToolBox:
     def create_mt_symbol(self):
         yf_sym = self.strat.ticker
         if "=X" in yf_sym:
-            yf_sym.replace("=X", "")
-            if len(yf_sym) == 3:
-                yf_sym = yf_sym + "USD"
+            yf_sym = yf_sym.replace("=X", "")
+
+        if len(yf_sym) == 3:
+            yf_sym = "USD" + yf_sym
 
         return yf_sym
 
     def apply_inidcators(self):
-        df = self.get_data()
+
+        self.df = self.get_data()
 
         pd.set_option('display.max_rows', None)
         pd.set_option('display.max_columns', None)
 
-        rsi = df.ta.rsi(close='Close',
+        rsi = self.df.ta.rsi(close='Close',
                         length=self.strat.rsi_length,
                         signal_indicators=True,
                         xa=self.strat.rsi_high,
                         xb=self.strat.rsi_low)
 
-        macd = df.ta.macd(close='Close', fast=self.strat.macd_fast, slow=self.strat.macd_slow)
-        ema = df.ta.ema(close='Close', length=self.strat.ema_length)
-        sma = df.ta.sma(close='Close', length=self.strat.sma_length)
+        macd = self.df.ta.macd(close='Close', fast=self.strat.macd_fast, slow=self.strat.macd_slow)
+        ema = self.df.ta.ema(close='Close', length=self.strat.ema_length)
+        sma = self.df.ta.sma(close='Close', length=self.strat.sma_length)
 
-        self.df = pd.concat([df, rsi, macd, ema, sma], axis=1)
-        self.df = df.drop(['Dividends', 'Stock Splits'], axis=1)
+        self.df = pd.concat([self.df, rsi, macd, ema, sma], axis=1)
+        self.df = self.df.drop(['Dividends', 'Stock Splits'], axis=1)
         print(len(self.df))
         return self.df
 
@@ -107,12 +134,13 @@ class ToolBox:
 
     def ema_trend_buy_condition(self, i):
         """defines the ema buying condition."""
-        long_trend = self.tst.get_angle_two_points(
+        print(i - self.trend_win)
+        long_trend = self.strat_tools.get_angle_two_points(
                     self.df.iloc[i - self.trend_win][self.ema],
                     self.df.iloc[i][self.ema],
                     self.lever)
 
-        short_trend = self.tst.get_angle_two_points(
+        short_trend = self.strat_tools.get_angle_two_points(
                     self.df.iloc[i - self.short_win][self.ema],
                     self.df.iloc[i][self.ema],
                     self.lever)
@@ -122,12 +150,12 @@ class ToolBox:
 
     def sma_trend_buy_condition(self, i):
         """defines the sma buying condition."""
-        long_trend = self.tst.get_angle_two_points(
+        long_trend = self.strat_tools.get_angle_two_points(
             self.df.iloc[i - self.trend_win][self.sma],
             self.df.iloc[i][self.sma],
             self.lever)
 
-        short_trend = self.tst.get_angle_two_points(
+        short_trend = self.strat_tools.get_angle_two_points(
             self.df.iloc[i - self.short_win][self.sma],
             self.df.iloc[i][self.sma],
             self.lever)
@@ -170,7 +198,7 @@ class ToolBox:
         shifts = 0
         sl = 0
         tp = 0
-        
+
         for val in range(self.strat.n_vol_tp - 1):
             shift = self.df.iloc[i - self.strat.n_vol_tp + val]['Close'] - self.df.iloc[i - self.strat.n_vol_tp + val - 1]['Close']
             shifts += abs(shift)
@@ -201,12 +229,12 @@ class ToolBox:
 
     def ema_trend_sell_condition(self, i):
         """defines the ema sell condition."""
-        long_trend = self.tst.get_angle_two_points(
+        long_trend = self.strat_tools.get_angle_two_points(
             self.df.iloc[i - self.trend_win][self.ema],
             self.df.iloc[i][self.ema],
             self.lever)
 
-        short_trend = self.tst.get_angle_two_points(
+        short_trend = self.strat_tools.get_angle_two_points(
             self.df.iloc[i - self.short_win][self.ema],
             self.df.iloc[i][self.ema],
             self.lever)
@@ -216,12 +244,12 @@ class ToolBox:
 
     def sma_trend_sell_condition(self, i):
         """defines the sma sell condition."""
-        long_trend = self.tst.get_angle_two_points(
+        long_trend = self.strat_tools.get_angle_two_points(
             self.df.iloc[i - self.trend_win][self.sma],
             self.df.iloc[i][self.sma],
             self.lever)
 
-        short_trend = self.tst.get_angle_two_points(
+        short_trend = self.strat_tools.get_angle_two_points(
             self.df.iloc[i - self.short_win][self.sma],
             self.df.iloc[i][self.sma],
             self.lever)
@@ -326,32 +354,72 @@ class ToolBox:
     def request_creator(self):
 
         self.df = self.apply_inidcators()
-        i = len(self.df - 1)
+        idx = len(self.df) - 1
+        print(idx)
+        request = {}
 
         symbol = self.create_mt_symbol()
+        lot = self.get_lot()
+        deviation = 20
+        price = get_price(symbol)
+        sl = 0
+        tp = 0
 
         """Applies buying position logic"""
-        if self.buying_conditions_applier(i):
+        if self.buying_conditions_applier(idx):
             if self.strat.rsf_n1:
-                sl = self.rsf_buy_condition(i)[0]
-                tp = self.rsf_buy_condition(i)[1]
+                sl = self.rsf_buy_condition(idx)[0]
+                tp = self.rsf_buy_condition(idx)[1]
             elif self.strat.n_vol_tp:
-                sl = self.vol_tp_condition(i, 1)[0]
-                sl = self.vol_tp_condition(i, 1)[1]
+                sl = self.vol_tp_condition(idx, 1)[0]
+                tp = self.vol_tp_condition(idx, 1)[1]
+
+            request = {
+                "action": mt.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lot,
+                "type": mt.ORDER_TYPE_BUY,
+                "price": price,
+                "sl": sl,
+                "tp": tp,
+                "deviation": deviation,
+                "magic": 234000,
+                "comment": "python script open",
+                "type_time": mt.ORDER_TIME_GTC,
+                "type_filling": mt.ORDER_FILLING_RETURN,
+            }
 
         """Applies selling position logic"""
-        if self.selling_conditions_applier(i):
+        if self.selling_conditions_applier(idx):
             self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
             if self.strat.rsf_n1:
-                sl = self.rsf_sell_condition(i)[0]
-                tp = self.rsf_sell_condition(i)[1]
+                sl = self.rsf_sell_condition(idx)[0]
+                tp = self.rsf_sell_condition(idx)[1]
             elif self.strat.n_vol_tp:
-                sl = self.vol_tp_condition(i, 2)[0]
-                sl = self.vol_tp_condition(i, 2)[1]
+                sl = self.vol_tp_condition(idx, 2)[0]
+                sl = self.vol_tp_condition(idx, 2)[1]
+
+            request = {
+                "action": mt.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lot,
+                "type": mt.ORDER_TYPE_SELL,
+                "price": price,
+                "sl": sl,
+                "tp": tp,
+                "deviation": deviation,
+                "magic": 234000,
+                "comment": "python script open",
+                "type_time": mt.ORDER_TIME_GTC,
+                "type_filling": mt.ORDER_FILLING_RETURN,
+            }
+
+        return request
 
 
 """__________________________________________________________________________________________________________________"""
 
+print(ToolBox(2).request_creator())
 """__________________________________________________________________________________________________________________"""
 
 
