@@ -19,7 +19,7 @@ def mt_connect():
     mt.login(login, password, server)
 
 
-def account_info():
+def mt_account_info():
     mt_connect()
     account_info = mt.account_info()
     return account_info
@@ -31,7 +31,7 @@ def get_price(symbol):
     return price
 
 
-balance = account_info().balance
+balance = mt_account_info().balance
 
 
 class ToolBox:
@@ -107,12 +107,15 @@ class ToolBox:
         pd.set_option('display.max_columns', None)
 
         rsi = self.df.ta.rsi(close='Close',
-                        length=self.strat.rsi_length,
-                        signal_indicators=True,
-                        xa=self.strat.rsi_high,
-                        xb=self.strat.rsi_low)
+                             length=self.strat.rsi_length,
+                             signal_indicators=True,
+                             xa=self.strat.rsi_high,
+                             xb=self.strat.rsi_low
+                             )
 
-        macd = self.df.ta.macd(close='Close', fast=self.strat.macd_fast, slow=self.strat.macd_slow)
+        macd = self.df.ta.macd(close='Close',
+                               fast=self.strat.macd_fast,
+                               slow=self.strat.macd_slow)
         ema = self.df.ta.ema(close='Close', length=self.strat.ema_length)
         sma = self.df.ta.sma(close='Close', length=self.strat.sma_length)
 
@@ -397,7 +400,7 @@ class ToolBox:
                 tp = self.rsf_sell_condition(idx)[1]
             elif self.strat.n_vol_tp:
                 sl = self.vol_tp_condition(idx, 2)[0]
-                sl = self.vol_tp_condition(idx, 2)[1]
+                tp = self.vol_tp_condition(idx, 2)[1]
 
             request = {
                 "action": mt.TRADE_ACTION_DEAL,
@@ -424,9 +427,6 @@ print(ToolBox(2).request_creator())
 
 
 def position_getter(strategy_id):
-
+    pass
     start_time = time.time()
-
-
     # time.sleep(60.0 - ((time.time() - start_time) % 60.0))
-
