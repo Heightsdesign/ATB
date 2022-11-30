@@ -33,14 +33,11 @@ def analyser(n):
         scores.append(scorer(stat))
 
     scores = sorted(scores, key=lambda x: x['score'], reverse=True)
-    print(scores)
     for i in range(n):
         res.append(scores[i]["strat_id"])
 
     return res
 
-
-print(analyser(3))
 
 
 

@@ -8,30 +8,15 @@ from res_sup_finder import ResSupFinder as rsf
 from models import Strategy, Stats, Results
 from strategies import Strat
 
-# Demo Account
-login = 41792961
-password = 'e9w3Ef2zL2Hl'
-server = 'AdmiralMarkets-Demo'
-
-
-def mt_connect():
-    mt.initialize()
-    mt.login(login, password, server)
-
 
 def mt_account_info():
-    mt_connect()
     account_info = mt.account_info()
     return account_info
 
 
 def get_price(symbol):
-    mt_connect()
     price = mt.symbol_info_tick(symbol).ask
     return price
-
-
-balance = mt_account_info().balance
 
 
 class ToolBox:
@@ -62,6 +47,8 @@ class ToolBox:
         self.short_win = self.strat.short_trend_win
 
     def get_lot(self):
+
+        balance = mt_account_info().balance
 
         lot = 0
         if 1000 <= balance < 2000:
@@ -121,7 +108,6 @@ class ToolBox:
 
         self.df = pd.concat([self.df, rsi, macd, ema, sma], axis=1)
         self.df = self.df.drop(['Dividends', 'Stock Splits'], axis=1)
-        print(len(self.df))
         return self.df
 
     def rsi_buy_condition(self, i):
@@ -137,7 +123,6 @@ class ToolBox:
 
     def ema_trend_buy_condition(self, i):
         """defines the ema buying condition."""
-        print(i - self.trend_win)
         long_trend = self.strat_tools.get_angle_two_points(
                     self.df.iloc[i - self.trend_win][self.ema],
                     self.df.iloc[i][self.ema],
@@ -358,7 +343,6 @@ class ToolBox:
 
         self.df = self.apply_inidcators()
         idx = len(self.df) - 1
-        print(idx)
         request = {}
 
         symbol = self.create_mt_symbol()
@@ -383,13 +367,13 @@ class ToolBox:
                 "volume": lot,
                 "type": mt.ORDER_TYPE_BUY,
                 "price": price,
-                "sl": sl,
-                "tp": tp,
+                "sl": round(sl, 5),
+                "tp": round(tp, 5),
                 "deviation": deviation,
                 "magic": 234000,
                 "comment": "python script open",
                 "type_time": mt.ORDER_TIME_GTC,
-                "type_filling": mt.ORDER_FILLING_RETURN,
+                "type_filling": mt.ORDER_FILLING_IOC,
             }
 
         """Applies selling position logic"""
@@ -408,13 +392,13 @@ class ToolBox:
                 "volume": lot,
                 "type": mt.ORDER_TYPE_SELL,
                 "price": price,
-                "sl": sl,
-                "tp": tp,
+                "sl":round(sl, 5),
+                "tp": round(tp, 5),
                 "deviation": deviation,
                 "magic": 234000,
                 "comment": "python script open",
                 "type_time": mt.ORDER_TIME_GTC,
-                "type_filling": mt.ORDER_FILLING_RETURN,
+                "type_filling": mt.ORDER_FILLING_IOC,
             }
 
         return request
@@ -422,11 +406,6 @@ class ToolBox:
 
 """__________________________________________________________________________________________________________________"""
 
-print(ToolBox(2).request_creator())
+# print(ToolBox(2).request_creator())
 """__________________________________________________________________________________________________________________"""
 
-
-def position_getter(strategy_id):
-    pass
-    start_time = time.time()
-    # time.sleep(60.0 - ((time.time() - start_time) % 60.0))
