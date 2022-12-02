@@ -13,11 +13,11 @@ def scorer(stat):
     if 85 <= stat.win_ratio < 100:
         score += 5
 
-    if 15 <= volume < 70:
+    if 15 <= volume < 80:
         score += 5
-    if 30 <= volume < 70:
+    if 30 <= volume < 80:
         score += 5
-    if 45 <= volume < 70:
+    if 45 <= volume < 80:
         score += 5
 
     return {"score": score, "strat_id": stat.strategy.id}
@@ -36,6 +36,7 @@ def analyser(n):
     for i in range(n):
         res.append(scores[i]["strat_id"])
 
+    print(res)
     return res
 
 

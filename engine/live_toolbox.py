@@ -31,7 +31,6 @@ class ToolBox:
         # Choose resistance, support parameters.
         # The number of candles to consider before [0] and after [1] direction switch
         self.rsf_vals = [self.strat.rsf_n1, self.strat.rsf_n1]
-        self.lever = 1
 
         # Setups string indexes
         self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_{self.strat.macd_fast}"
@@ -392,7 +391,7 @@ class ToolBox:
                 "volume": lot,
                 "type": mt.ORDER_TYPE_SELL,
                 "price": price,
-                "sl":round(sl, 5),
+                "sl": round(sl, 5),
                 "tp": round(tp, 5),
                 "deviation": deviation,
                 "magic": 234000,

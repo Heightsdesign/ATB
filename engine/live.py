@@ -12,7 +12,7 @@ login = 41792961
 password = 'e9w3Ef2zL2Hl'
 server = 'AdmiralMarkets-Demo'
 
-best_strats = analyser(3)
+best_strats = analyser(5)
 print(best_strats)
 
 
@@ -34,7 +34,7 @@ class Live:
 
             for id in self.strats:
                 request = ToolBox(id).request_creator()
-                if request != {}:
+                if request:
                     print(request["action"])
                     mt.order_send(request)
                     print(mt.order_send(request))

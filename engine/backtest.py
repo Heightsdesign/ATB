@@ -635,7 +635,7 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["GBPUSD=X", "EURGBP=X", "CAD=X", "EURCAD=X", "EURCHF=X"],
+    ["JPY=X", "EURJPY=X", "EURCAD=X", "EURAUD=X", "EURNZD=X"],
     {
         "period": "50d",
         "interval": "5m",
@@ -653,12 +653,12 @@ launcher = Launcher(
         "rsf_n1": None,
         "rsf_n2": None,
         "n_vol_tp": 100,
-        "tp_percent": 100,
+        "tp_percent": 110,
         "sl_percent": 50,
         "rbv": 45,
         "description": "res:sup finder strength = 4"
     },
-    'D:\Predictive Financial Tools\currency_tickers.txt',
+    # 'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
 # print(launcher.strategies_creator())
