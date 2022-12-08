@@ -1,24 +1,50 @@
 from models import Strategy, Stats, Results
 
 
+def del_losses():
+
+    all_strats = Strategy.select()
+    for strat in all_strats:
+        print(strat.id)
+
+        try:
+            stat = Stats.get(strategy=strat.id)
+            results = Results.select().join(Strategy).where(Strategy.id == strat.id)
+            if stat.profit < 0.0:
+                stat.delete_instance()
+                for res in results:
+                    res.delete_instance()
+                strat.delete_instance()
+
+        except:
+            results = Results.select().join(Strategy).where(Strategy.id == strat.id)
+            print(results)
+            if results:
+                for res in results:
+                    res.delete_instance()
+
+            strat.delete_instance()
+            continue
+
+
 def scorer(stat):
     """Applies a score out of 30 to statistics of a strategy."""
     score = 0
     volume = stat.wins + stat.losses
+    if stat.profit > 0.0:
+        if 65 <= stat.win_ratio < 100:
+            score += 5
+        if 75 <= stat.win_ratio < 100:
+            score += 5
+        if 85 <= stat.win_ratio < 100:
+            score += 5
 
-    if 65 <= stat.win_ratio < 100:
-        score += 5
-    if 75 <= stat.win_ratio < 100:
-        score += 5
-    if 85 <= stat.win_ratio < 100:
-        score += 5
-
-    if 15 <= volume < 80:
-        score += 5
-    if 30 <= volume < 80:
-        score += 5
-    if 45 <= volume < 80:
-        score += 5
+        if 15 <= volume < 80:
+            score += 5
+        if 30 <= volume < 80:
+            score += 5
+        if 45 <= volume < 80:
+            score += 5
 
     return {"score": score, "strat_id": stat.strategy.id}
 
@@ -40,6 +66,7 @@ def analyser(n):
     return res
 
 
+# del_losses()
 
 
 
