@@ -2,6 +2,7 @@ import pandas as pd
 import pandas_ta as ta
 import numpy as np
 from datetime import datetime
+from decimal import Decimal
 from strategies import Strat
 from res_sup_finder import ResSupFinder as rsf
 from models import Results, Stats, Strategy
@@ -182,6 +183,26 @@ class Simulator:
 
         return [sl, tp]
 
+    def ma_tp_condition(self, i, direction):
+
+        sl = self.df.iloc[i][self.ema]
+        tp = 0
+
+        # buying direction
+        if direction == 1:
+            sl_shift = self.df.iloc[i]['Close'] - sl
+            tp = self.df.iloc[i]['Close'] + sl_shift * float(self.strat.ma_tp)
+
+        # selling direction
+        elif direction == 2:
+            sl_shift = sl - self.df.iloc[i]['Close']
+            tp = self.df.iloc[i]['Close'] - sl_shift * float(self.strat.ma_tp)
+
+        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+        self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+
+        return[sl, tp]
+
     def rsi_sell_condition(self, i):
         """defines the rsi selling condition."""
         if self.df.iloc[i][self.xa] == 1 and self.df.iloc[i - 1][self.xa] == 0:
@@ -342,6 +363,8 @@ class Simulator:
                     self.rsf_buy_condition(i)
                 elif self.strat.n_vol_tp:
                     self.vol_tp_condition(i, 1)
+                elif self.strat.ma_tp:
+                    self.ma_tp_condition(i, 1)
 
             """Applies selling position logic"""
             if self.selling_conditions_applier(i):
@@ -350,6 +373,8 @@ class Simulator:
                     self.rsf_sell_condition(i)
                 elif self.strat.n_vol_tp:
                     self.vol_tp_condition(i, 2)
+                elif self.strat.ma_tp:
+                    self.ma_tp_condition(i, 2)
 
         return self.df
 
@@ -512,7 +537,7 @@ class Simulator:
             win_ratio=win_ratio,
             wins=num_wins,
             losses=num_losses,
-            profit=total_profit,
+            profit=total_profit * self.lever,
             strategy=self.strategy_id,
         )
         stats.save()
@@ -564,6 +589,8 @@ class Launcher:
             res += f'-rsf-{self.params["rsf_n1"]}-{self.params["rsf_n2"]}'
         if self.params["n_vol_tp"]:
             res += f'-vol-{self.params["n_vol_tp"]}-{self.params["tp_percent"]}-{self.params["sl_percent"]}'
+        if self.params["ma_tp"]:
+            res += f'-ma_tp-{self.params["ma_tp"]}'
         return res
 
     def check_duplicates(self, ticker):
@@ -603,6 +630,7 @@ class Launcher:
                     tp_percentage=self.params["tp_percent"],
                     sl_percentage=self.params["sl_percent"],
                     retracement_bar_val=self.params["rbv"],
+                    ma_tp=self.params["ma_tp"],
                     description=self.params["description"],
 
                 )
@@ -648,17 +676,18 @@ launcher = Launcher(
         "sma_length": None,
         "trend_line_win": 100,
         "trend_angle": 30,
-        "short_win": 100,
-        "short_angle": 25,
+        "short_win": 20,
+        "short_angle": 10,
         "rsf_n1": None,
         "rsf_n2": None,
-        "n_vol_tp": 100,
-        "tp_percent": 110,
-        "sl_percent": 50,
+        "n_vol_tp": None,
+        "tp_percent": None,
+        "sl_percent": None,
         "rbv": 45,
+        "ma_tp": 2.0,
         "description": "res:sup finder strength = 4"
     },
-    # 'D:\Predictive Financial Tools\currency_tickers.txt',
+    'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
 # print(launcher.strategies_creator())

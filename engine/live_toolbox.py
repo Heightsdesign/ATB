@@ -71,11 +71,13 @@ class ToolBox:
         return f"{round(num_days)}d"
 
     def get_data(self):
+
         ticker = yf.Ticker(self.strat.ticker)
         self.df = ticker.history(period=self.get_data_period(), interval=self.strat.interval)
         return self.df
 
     def create_mt_symbol(self):
+
         yf_sym = self.strat.ticker
         if "=X" in yf_sym:
             yf_sym = yf_sym.replace("=X", "")
@@ -127,6 +129,7 @@ class ToolBox:
                     self.df.iloc[i][self.ema],
                     self.lever)
 
+        print(f"Long trend: {long_trend}")
         short_trend = self.strat_tools.get_angle_two_points(
                     self.df.iloc[i - self.short_win][self.ema],
                     self.df.iloc[i][self.ema],
@@ -169,14 +172,19 @@ class ToolBox:
     def retracement_bar_buy_condition(self, i):
 
         whole_bar = self.df.iloc[i]['High'] - self.df.iloc[i]['Low']
-
         if self.df.iloc[i]['Open'] > self.df.iloc[i]['Close']:
             retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Open']
+
+            print(f"buy retracement : {retracement / whole_bar * 100}")
+
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
                 return True
 
         elif self.df.iloc[i]['Open'] < self.df.iloc[i]['Close']:
             retracement = self.df.iloc[i]['High'] - self.df.iloc[i]['Close']
+
+            print(f"buy retracement : {retracement / whole_bar * 100}")
+
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
                 return True
 
@@ -264,11 +272,17 @@ class ToolBox:
         whole_bar = self.df.iloc[i]['High'] - self.df.iloc[i]['Low']
         if self.df.iloc[i]['Close'] < self.df.iloc[i]['Open']:
             retracement = self.df.iloc[i]['Close'] - self.df.iloc[i]['Low']
+
+            print(f"sell retracement : {retracement / whole_bar * 100}")
+
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
                 return True
 
         elif self.df.iloc[i]['Close'] > self.df.iloc[i]['Open']:
             retracement = self.df.iloc[i]['Open'] - self.df.iloc[i]['Low']
+
+            print(f"sell retracement : {retracement / whole_bar * 100}")
+
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
                 return True
 
@@ -276,6 +290,7 @@ class ToolBox:
 
         conditions = []
         valid_conditions = 0
+        print(self.strat.ticker)
 
         if self.strat.rsi_high:
             conditions.append("rsi")
@@ -299,7 +314,7 @@ class ToolBox:
 
         if self.strat.retracement_bar_val:
             conditions.append("rbv")
-            if self.retracement_bar_buy_condition(i):
+            if self.retracement_bar_buy_condition(i - 1):
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
@@ -332,7 +347,7 @@ class ToolBox:
 
         if self.strat.retracement_bar_val:
             conditions.append("rbv")
-            if self.retracement_bar_sell_condition(i):
+            if self.retracement_bar_sell_condition(i - 1):
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
