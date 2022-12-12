@@ -107,7 +107,7 @@ class Simulator:
                     self.df.iloc[i][self.ema],
                     self.lever)
 
-        if i > self.strat.ema_length * 2:
+        if i > self.strat.ema_length + self.trend_win:
             if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
                 return True
 
@@ -123,7 +123,7 @@ class Simulator:
             self.df.iloc[i][self.sma],
             self.lever)
 
-        if i > self.strat.ema_length * 2:
+        if i > self.strat.ema_length + self.trend_win:
             if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
                 return True
 
@@ -226,7 +226,7 @@ class Simulator:
             self.df.iloc[i][self.ema],
             self.lever)
 
-        if i > self.strat.ema_length * 2:
+        if i > self.strat.ema_length + self.trend_win:
             if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
                 return True
 
@@ -242,7 +242,7 @@ class Simulator:
             self.df.iloc[i][self.sma],
             self.lever)
 
-        if i > self.strat.ema_length * 2:
+        if i > self.strat.ema_length + self.trend_win:
             if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
                 return True
 
@@ -674,24 +674,83 @@ launcher = Launcher(
         "macd_slow": None,
         "ema_length": 200,
         "sma_length": None,
-        "trend_line_win": 200,
-        "trend_angle": 45,
+        "trend_line_win": 400,
+        "trend_angle": 55,
         "short_win": 100,
-        "short_angle": 30,
+        "short_angle": 15,
         "rsf_n1": None,
         "rsf_n2": None,
         "n_vol_tp": None,
         "tp_percent": None,
         "sl_percent": None,
-        "rbv": 45,
+        "rbv": 55,
         "ma_tp": 2.0,
         "description": "res:sup finder strength = 4"
     },
-    'D:\Predictive Financial Tools\currency_tickers.txt',
+    # 'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
 # print(launcher.strategies_creator())
-print(launcher.launch())
+# print(launcher.launch())
 
 
 """__________________________________________________________________________________________________________________"""
+
+
+class MultipleLauncher:
+
+    """The multiple launcher allows to you launch multiple
+    simulations going over the parameters and its scope.
+    For example if you wish to find which ema length is optimal
+    for your strategy within a 50 - 500 length scope, you pass can the
+    parameter name 'ema_length' and the scope [50, 500] to the
+    instance obj and the program will simulate your strategy
+    for every ema_length increments within the given scope.
+    So in our example if the increment chosen is 10,
+    it will start at simulating your strategy with an ema_length of 50,
+    then 60, then 70 ... up to 500.
+
+    iter_params ex: {'param1':{
+                    'name':'ema_length',
+                    'scope': [50, 500],
+                    'increments': 10}
+                    }"""
+
+    def __init__(self, launcher_obj, iter_params):
+
+        self.launcher_obj = launcher_obj
+        self.iter_params = iter_params
+
+    def create_increments(self, param):
+
+        increments = []
+        start = param['scope'][0]
+        stop = param['scope'][1]
+        step = param['increments']
+
+        for i in range(start, stop, step):
+            increments.append(i)
+
+        return increments
+
+    def multi_launch(self):
+
+        for param in self.iter_params.values():
+            if self.launcher_obj.params[param['name']]:
+                # print(param['name'])
+                increments = self.create_increments(param)
+                # print(increments)
+                for i in increments:
+                    self.launcher_obj.params[param['name']] = i
+                    self.launcher_obj.launch()
+
+
+"""__________________________________________________________________________________________________________________"""
+
+gen_multiple_launcher = MultipleLauncher(launcher, {'param1': {
+                    'name': 'ema_length',
+                    'scope': [50, 500],
+                    'increments': 10}
+                    })
+
+print(gen_multiple_launcher.multi_launch())

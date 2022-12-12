@@ -28,22 +28,17 @@ def del_losses():
 
 
 def scorer(stat):
-    """Applies a score out of 30 to statistics of a strategy."""
+    """Applies a score out of 20 to statistics of a strategy."""
     score = 0
     volume = stat.wins + stat.losses
-    if stat.profit > 0.0:
+    if volume > 10:
+        if 55 <= stat.win_ratio < 100:
+            score += 5
         if 65 <= stat.win_ratio < 100:
             score += 5
         if 75 <= stat.win_ratio < 100:
             score += 5
         if 85 <= stat.win_ratio < 100:
-            score += 5
-
-        if 15 <= volume < 80:
-            score += 5
-        if 30 <= volume < 80:
-            score += 5
-        if 45 <= volume < 80:
             score += 5
 
     return {"score": score, "strat_id": stat.strategy.id}
@@ -66,7 +61,7 @@ def analyser(n):
     return res
 
 
-# del_losses()
+del_losses()
 
 
 
