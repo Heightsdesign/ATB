@@ -9,7 +9,6 @@ from models import Results, Stats, Strategy
 
 
 class Simulator:
-
     """The simulator object simulates a given strategy
     created in the database and takes in its id as argument.
     The simulator is build like a toolbox with the conditions
@@ -98,14 +97,14 @@ class Simulator:
     def ema_trend_buy_condition(self, i):
         """defines the ema buying condition."""
         long_trend = self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.ema],
-                    self.df.iloc[i][self.ema],
-                    self.lever)
+            self.df.iloc[i - self.trend_win][self.ema],
+            self.df.iloc[i][self.ema],
+            self.lever)
 
         short_trend = self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.short_win][self.ema],
-                    self.df.iloc[i][self.ema],
-                    self.lever)
+            self.df.iloc[i - self.short_win][self.ema],
+            self.df.iloc[i][self.ema],
+            self.lever)
 
         if i > self.strat.ema_length + self.trend_win:
             if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
@@ -124,6 +123,8 @@ class Simulator:
             self.lever)
 
         if i > self.strat.ema_length + self.trend_win:
+            print(long_trend)
+            print(self.strat.trend_angle)
             if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
                 return True
 
@@ -161,7 +162,8 @@ class Simulator:
 
         shifts = 0
         for val in range(self.strat.n_vol_tp - 1):
-            shift = self.df.iloc[i - self.strat.n_vol_tp + val]['Close'] - self.df.iloc[i - self.strat.n_vol_tp + val - 1]['Close']
+            shift = self.df.iloc[i - self.strat.n_vol_tp + val]['Close'] - \
+                    self.df.iloc[i - self.strat.n_vol_tp + val - 1]['Close']
             shifts += abs(shift)
 
         avg_shift = shifts / self.strat.n_vol_tp
@@ -201,7 +203,7 @@ class Simulator:
         self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
-        return[sl, tp]
+        return [sl, tp]
 
     def rsi_sell_condition(self, i):
         """defines the rsi selling condition."""
@@ -350,9 +352,9 @@ class Simulator:
         for i in range(len(self.df)):
 
             trend_angle = self.tst.get_angle_two_points(
-                    self.df.iloc[i - self.trend_win][self.ema],
-                    self.df.iloc[i][self.ema],
-                    self.lever
+                self.df.iloc[i - self.trend_win][self.ema],
+                self.df.iloc[i][self.ema],
+                self.lever
             )
             self.df.iloc[i, self.df.columns.get_loc('trend_angle')] = trend_angle
 
@@ -554,7 +556,6 @@ class Simulator:
 
 
 class Launcher:
-
     """The Launcher is build to launch a strategy over
     multiple indexes. The 'indexes' to be simulated should be
     a list of tickers and the strategy parameter should be
@@ -667,27 +668,27 @@ launcher = Launcher(
     {
         "period": "50d",
         "interval": "5m",
-        "rsi_length": None,
-        "rsi_high": None,
-        "rsi_low": None,
+        "rsi_length": 14,
+        "rsi_high": 70,
+        "rsi_low": 30,
         "macd_fast": None,
         "macd_slow": None,
         "ema_length": 200,
         "sma_length": None,
         "trend_line_win": 400,
-        "trend_angle": 55,
+        "trend_angle": 45,
         "short_win": 100,
         "short_angle": 15,
         "rsf_n1": None,
         "rsf_n2": None,
-        "n_vol_tp": None,
-        "tp_percent": None,
-        "sl_percent": None,
-        "rbv": 55,
-        "ma_tp": 2.0,
+        "n_vol_tp": 50,
+        "tp_percent": 400,
+        "sl_percent": 50,
+        "rbv": None,
+        "ma_tp": None,
         "description": "res:sup finder strength = 4"
     },
-    # 'D:\Predictive Financial Tools\currency_tickers.txt',
+    'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
 # print(launcher.strategies_creator())
@@ -698,7 +699,6 @@ launcher = Launcher(
 
 
 class MultipleLauncher:
-
     """The multiple launcher allows to you launch multiple
     simulations going over the parameters and its scope.
     For example if you wish to find which ema length is optimal
@@ -747,10 +747,17 @@ class MultipleLauncher:
 
 """__________________________________________________________________________________________________________________"""
 
-gen_multiple_launcher = MultipleLauncher(launcher, {'param1': {
-                    'name': 'ema_length',
-                    'scope': [50, 500],
-                    'increments': 10}
-                    })
+gen_multiple_launcher = MultipleLauncher(launcher,
+                                         {'param1': {
+                                             'name': 'trend_line_win',
+                                             'scope': [100, 1000],
+                                             'increments': 50
+                                         },
+                                             'param2': {
+                                                 'name': 'trend_angle',
+                                                 'scope': [10, 65],
+                                                 'increments': 5
+                                             },
+                                         })
 
 print(gen_multiple_launcher.multi_launch())

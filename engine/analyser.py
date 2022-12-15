@@ -9,8 +9,9 @@ def del_losses():
 
         try:
             stat = Stats.get(strategy=strat.id)
+            volume = stat.wins + stat.losses
             results = Results.select().join(Strategy).where(Strategy.id == strat.id)
-            if stat.profit < 0.0:
+            if stat.profit < 0.0 or volume < 10:
                 stat.delete_instance()
                 for res in results:
                     res.delete_instance()
@@ -27,46 +28,64 @@ def del_losses():
             continue
 
 
-def scorer(stat):
-    """Applies a score out of 20 to statistics of a strategy."""
-    score = 0
-    volume = stat.wins + stat.losses
-    if volume > 10:
-        if 55 <= stat.win_ratio < 100:
-            score += 5
-        if 65 <= stat.win_ratio < 100:
-            score += 5
-        if 75 <= stat.win_ratio < 100:
-            score += 5
-        if 85 <= stat.win_ratio < 100:
-            score += 5
+def del_unwanted(tick_file):
 
-    return {"score": score, "strat_id": stat.strategy.id}
+    indexes = []
+    with open(tick_file, 'r') as f:
+        for line in f:
+            indexes.append(line.replace('\n', ''))
+    strats = Strategy.select()
+
+    for strat in strats:
+        if strat.ticker not in indexes:
+            stat = Stats.get(strategy=strat.id)
+            results = Results.select().join(Strategy).where(Strategy.id == strat.id)
+
+            stat.delete_instance()
+            for res in results:
+
+                res.delete_instance()
+            strat.delete_instance()
+
 
 
 def analyser(n):
     """Gets n best strategies ids (by score)"""
 
-    scores = []
     stats = Stats.select()
+    parsed_strats = []
+    ticks = []
     res = []
-    for stat in stats:
-        scores.append(scorer(stat))
 
-    scores = sorted(scores, key=lambda x: x['score'], reverse=True)
-    for i in range(n):
-        res.append(scores[i]["strat_id"])
+    sorted_stats = sorted(stats, key=lambda x: x.win_ratio, reverse=True)
 
-    print(res)
-    return res
+    for stat in sorted_stats:
+        strat = Strategy.get(id=stat.strategy)
+        volume = stat.wins + stat.losses
+        parsed_strat = {
+            "strat_id": stat.strategy,
+            "win_ratio": stat.win_ratio,
+            "ticker": strat.ticker,
+            "volume": volume
+        }
+        parsed_strats.append(parsed_strat)
+
+        if strat.ticker not in ticks:
+            ticks.append(strat.ticker)
+
+    for strat in parsed_strats:
+        if strat["ticker"] in ticks:
+            print(f'Ratio : {strat["win_ratio"]} / Volume : {strat["volume"]}')
+            res.append(strat["strat_id"])
+            ticks.remove(strat["ticker"])
+
+    return res[:n]
 
 
-del_losses()
+"""__________________________________________________________________________________________________________________"""
 
-
-
-
-
-
+# del_losses()
+# del_unwanted('D:\Predictive Financial Tools\currency_tickers.txt')
+# print(analyser(10))
 
 

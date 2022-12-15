@@ -134,9 +134,9 @@ class ToolBox:
                     self.df.iloc[i - self.short_win][self.ema],
                     self.df.iloc[i][self.ema],
                     self.lever)
-
-        if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
-            return True
+        if i > self.strat.ema_length + self.trend_win:
+            if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
+                return True
 
     def sma_trend_buy_condition(self, i):
         """defines the sma buying condition."""
@@ -149,9 +149,9 @@ class ToolBox:
             self.df.iloc[i - self.short_win][self.sma],
             self.df.iloc[i][self.sma],
             self.lever)
-
-        if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
-            return True
+        if i > self.strat.sma_length + self.trend_win:
+            if long_trend > self.strat.trend_angle and short_trend > self.strat.short_trend_angle:
+                return True
 
     def rsf_buy_condition(self, i):
         """Identifies supports and resistances to set sl and tp
@@ -233,9 +233,9 @@ class ToolBox:
             self.df.iloc[i - self.short_win][self.ema],
             self.df.iloc[i][self.ema],
             self.lever)
-
-        if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
-            return True
+        if i > self.strat.ema_length + self.trend_win:
+            if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
+                return True
 
     def sma_trend_sell_condition(self, i):
         """defines the sma sell condition."""
@@ -248,9 +248,9 @@ class ToolBox:
             self.df.iloc[i - self.short_win][self.sma],
             self.df.iloc[i][self.sma],
             self.lever)
-
-        if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
-            return True
+        if i > self.strat.ema_length + self.trend_win:
+            if long_trend < self.strat.trend_angle * -1 and short_trend < self.strat.short_trend_angle * -1:
+                return True
 
     def rsf_sell_condition(self, i):
         """Identifies supports and resistances to set sl and tp
@@ -286,6 +286,26 @@ class ToolBox:
             if retracement / whole_bar * 100 >= self.strat.retracement_bar_val:
                 return True
 
+    def ma_tp_condition(self, i, direction):
+
+        sl = self.df.iloc[i][self.ema]
+        tp = 0
+
+        # buying direction
+        if direction == 1:
+            sl_shift = self.df.iloc[i]['Close'] - sl
+            tp = self.df.iloc[i]['Close'] + sl_shift * float(self.strat.ma_tp)
+
+        # selling direction
+        elif direction == 2:
+            sl_shift = sl - self.df.iloc[i]['Close']
+            tp = self.df.iloc[i]['Close'] - sl_shift * float(self.strat.ma_tp)
+
+        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+        self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+
+        return [sl, tp]
+
     def buying_conditions_applier(self, i):
 
         conditions = []
@@ -317,6 +337,8 @@ class ToolBox:
             if self.retracement_bar_buy_condition(i - 1):
                 valid_conditions += 1
 
+        print(conditions)
+        print("\n")
         if valid_conditions == len(conditions):
             return True
 
@@ -368,12 +390,16 @@ class ToolBox:
 
         """Applies buying position logic"""
         if self.buying_conditions_applier(idx):
+            self.df.iloc[idx, self.df.columns.get_loc('buy')] = 1
             if self.strat.rsf_n1:
                 sl = self.rsf_buy_condition(idx)[0]
                 tp = self.rsf_buy_condition(idx)[1]
             elif self.strat.n_vol_tp:
                 sl = self.vol_tp_condition(idx, 1)[0]
                 tp = self.vol_tp_condition(idx, 1)[1]
+            elif self.strat.ma_tp:
+                sl = self.ma_tp_condition(idx, 1)[0]
+                tp = self.ma_tp_condition(idx, 1)[1]
 
             request = {
                 "action": mt.TRADE_ACTION_DEAL,
@@ -392,13 +418,16 @@ class ToolBox:
 
         """Applies selling position logic"""
         if self.selling_conditions_applier(idx):
-            self.df.iloc[i, self.df.columns.get_loc('sell')] = 1
+            self.df.iloc[idx, self.df.columns.get_loc('sell')] = 1
             if self.strat.rsf_n1:
                 sl = self.rsf_sell_condition(idx)[0]
                 tp = self.rsf_sell_condition(idx)[1]
             elif self.strat.n_vol_tp:
                 sl = self.vol_tp_condition(idx, 2)[0]
                 tp = self.vol_tp_condition(idx, 2)[1]
+            elif self.strat.ma_tp:
+                sl = self.ma_tp_condition(idx, 2)[0]
+                tp = self.ma_tp_condition(idx, 2)[1]
 
             request = {
                 "action": mt.TRADE_ACTION_DEAL,

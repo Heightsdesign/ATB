@@ -12,7 +12,7 @@ login = 41792961
 password = 'e9w3Ef2zL2Hl'
 server = 'AdmiralMarkets-Demo'
 
-best_strats = analyser(5)
+best_strats = analyser(9)
 print(best_strats)
 
 
