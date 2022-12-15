@@ -301,9 +301,6 @@ class ToolBox:
             sl_shift = sl - self.df.iloc[i]['Close']
             tp = self.df.iloc[i]['Close'] - sl_shift * float(self.strat.ma_tp)
 
-        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
-        self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-
         return [sl, tp]
 
     def buying_conditions_applier(self, i):
@@ -390,7 +387,6 @@ class ToolBox:
 
         """Applies buying position logic"""
         if self.buying_conditions_applier(idx):
-            self.df.iloc[idx, self.df.columns.get_loc('buy')] = 1
             if self.strat.rsf_n1:
                 sl = self.rsf_buy_condition(idx)[0]
                 tp = self.rsf_buy_condition(idx)[1]
@@ -418,7 +414,6 @@ class ToolBox:
 
         """Applies selling position logic"""
         if self.selling_conditions_applier(idx):
-            self.df.iloc[idx, self.df.columns.get_loc('sell')] = 1
             if self.strat.rsf_n1:
                 sl = self.rsf_sell_condition(idx)[0]
                 tp = self.rsf_sell_condition(idx)[1]
