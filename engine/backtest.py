@@ -34,7 +34,7 @@ class Simulator:
         self.lever = 1
 
         # Setups string indexes
-        self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_{self.strat.macd_fast}"
+        self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_9"
         self.macd = f"MACD_{self.macd_con}"
         self.macds = f"MACDs_{self.macd_con}"
         self.macdh = f"MACDh_{self.macd_con}"
@@ -90,8 +90,12 @@ class Simulator:
 
     def macd_buy_condition(self, i):
         """defines the macd buying condition."""
-        if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0 \
+        if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] \
                 and self.df.iloc[i][self.macdh] >= 0.01 / self.lever:
+            return True
+
+    def ema_clip_buy_condition(self, i):
+        if self.df.iloc[i][self.ema] > self.df.iloc[i - 1]['Close']:
             return True
 
     def ema_trend_buy_condition(self, i):
@@ -212,8 +216,12 @@ class Simulator:
 
     def macd_sell_condition(self, i):
         """defines the macd selling condition."""
-        if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0 \
+        if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] \
                 and self.df.iloc[i][self.macdh] <= -0.01 / self.lever:
+            return True
+
+    def ema_clip_sell_condition(self, i):
+        if self.df.iloc[i][self.ema] < self.df.iloc[i - 1]['Close']:
             return True
 
     def ema_trend_sell_condition(self, i):
@@ -668,31 +676,31 @@ launcher = Launcher(
     {
         "period": "50d",
         "interval": "5m",
-        "rsi_length": 14,
-        "rsi_high": 70,
-        "rsi_low": 30,
-        "macd_fast": None,
-        "macd_slow": None,
-        "ema_length": 200,
+        "rsi_length": None,
+        "rsi_high": None,
+        "rsi_low": None,
+        "macd_fast": 12,
+        "macd_slow": 26,
+        "ema_length": 100,
         "sma_length": None,
-        "trend_line_win": 400,
+        "trend_line_win": 100,
         "trend_angle": 45,
-        "short_win": 100,
-        "short_angle": 15,
+        "short_win": 50,
+        "short_angle": 20,
         "rsf_n1": None,
         "rsf_n2": None,
-        "n_vol_tp": 50,
-        "tp_percent": 400,
-        "sl_percent": 50,
+        "n_vol_tp": None,
+        "tp_percent": None,
+        "sl_percent": None,
         "rbv": None,
-        "ma_tp": None,
+        "ma_tp": 2.0,
         "description": "res:sup finder strength = 4"
     },
     'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
-# print(launcher.strategies_creator())
-# print(launcher.launch())
+print(launcher.strategies_creator())
+print(launcher.launch())
 
 
 """__________________________________________________________________________________________________________________"""
@@ -760,4 +768,4 @@ gen_multiple_launcher = MultipleLauncher(launcher,
                                              },
                                          })
 
-print(gen_multiple_launcher.multi_launch())
+# print(gen_multiple_launcher.multi_launch())

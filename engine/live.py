@@ -61,5 +61,5 @@ class Live:
 
 """__________________________________________________________________________________________________________________"""
 
-print(Live(best_strats, 50).run())
+print(Live(best_strats, 30).run())
 # print(Live(best_strats, 50).check_margin())

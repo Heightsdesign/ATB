@@ -84,7 +84,7 @@ def analyser(n):
 
 """__________________________________________________________________________________________________________________"""
 
-# del_losses()
+del_losses()
 # del_unwanted('D:\Predictive Financial Tools\currency_tickers.txt')
 # print(analyser(10))
 
