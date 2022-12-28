@@ -11,7 +11,7 @@ def del_losses():
             stat = Stats.get(strategy=strat.id)
             volume = stat.wins + stat.losses
             results = Results.select().join(Strategy).where(Strategy.id == strat.id)
-            if stat.profit < 0.0 or volume < 10:
+            if stat.profit < 0.0 or volume < 10 or stat.win_ratio < 60:
                 stat.delete_instance()
                 for res in results:
                     res.delete_instance()

@@ -1,10 +1,13 @@
 from peewee import *
+from playhouse.migrate import *
 import datetime
 
 # infos at : https://github.com/coleifer/peewee
 
 pg_db = PostgresqlDatabase('atb', user='postgres', password="Eug&nia06240",
                            host='127.0.0.1', port=5432)
+
+migrator = PostgresqlMigrator(pg_db)
 
 
 class BaseModel(Model):
@@ -37,9 +40,11 @@ class Strategy(BaseModel):
     tp_percentage = IntegerField(null=True)
     sl_percentage = IntegerField(null=True)
     ma_tp = DecimalField(max_digits=5, decimal_places=2, null=True)
+    ema_clip = BooleanField(default=False)
     lever = IntegerField(null=True)
 
-# create strategy
+
+# Create strategy
 strat = Strategy(
     name="EURUSD-1mo-5m-macd-ema-10",
     ticker="EURUSD=X",
@@ -81,12 +86,21 @@ class Results(BaseModel):
     strategy = ForeignKeyField(Strategy, null=True)
 
 
+"""__________________________________________________________________________________________________________________"""
+
 pg_db.connect()
 
 # UNCOMMENT TO CREATE TABLES IN DB
-pg_db.create_tables([Strategy, Results, Stats])
+# pg_db.create_tables([Strategy, Results, Stats])
+
 # UNCOMMENT TO CREATE STRATEGY
 # strat.save()
+
+# UNCOMMENT TO ALTER A TABLE AND MIGRATE
+"""ema_clip = BooleanField(default=False)
+migrate(
+    migrator.add_column('strategy', 'ema_clip', ema_clip),
+)"""
 
 
 

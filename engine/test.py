@@ -42,6 +42,11 @@ request = {
                 "type_time": mt.ORDER_TIME_GTC,
                 "type_filling": mt.ORDER_FILLING_IOC,
             }
-print(mt_connect())
-print(get_price(symbol))
-print(mt.order_send(request))
+#print(mt_connect())
+#print(get_price(symbol))
+#print(mt.order_send(request))
+
+val1 = round(412.8099975590, 9)
+val2 = round(413.6649938370, 9)
+
+print(val2 - val1)

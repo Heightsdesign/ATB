@@ -9,12 +9,25 @@ from models import Strategy, Stats, Results
 from strategies import Strat
 
 
+# Demo Account
+login = 41792961
+password = 'e9w3Ef2zL2Hl'
+server = 'AdmiralMarkets-Demo'
+
+
+def mt_connect():
+    mt.initialize()
+    mt.login(login, password, server)
+
+
 def mt_account_info():
+    mt_connect()
     account_info = mt.account_info()
     return account_info
 
 
 def get_price(symbol):
+    mt_connect()
     price = mt.symbol_info_tick(symbol).ask
     return price
 
@@ -30,10 +43,10 @@ class ToolBox:
 
         # Choose resistance, support parameters.
         # The number of candles to consider before [0] and after [1] direction switch
-        self.rsf_vals = [self.strat.rsf_n1, self.strat.rsf_n1]
+        self.rsf_vals = [self.strat.rsf_n1, self.strat.rsf_n2]
 
         # Setups string indexes
-        self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_{self.strat.macd_fast}"
+        self.macd_con = f"{self.strat.macd_fast}_{self.strat.macd_slow}_9"
         self.macd = f"MACD_{self.macd_con}"
         self.macds = f"MACDs_{self.macd_con}"
         self.macdh = f"MACDh_{self.macd_con}"
@@ -48,9 +61,10 @@ class ToolBox:
     def get_lot(self):
 
         balance = mt_account_info().balance
-
         lot = 0
-        if 1000 <= balance < 2000:
+        if balance < 1000:
+            lot = 0.01
+        elif 1000 <= balance < 2000:
             lot = 0.01
         elif 2000 <= balance < 3000:
             lot = 0.02
@@ -118,7 +132,7 @@ class ToolBox:
 
     def macd_buy_condition(self, i):
         """defines the macd buying condition."""
-        if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] < 0 \
+        if self.df.iloc[i][self.macds] < self.df.iloc[i][self.macd] \
                 and self.df.iloc[i][self.macdh] >= 0.01 / self.lever:
             return True
 
@@ -158,15 +172,11 @@ class ToolBox:
         for buying conditions."""
 
         sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
-        if sl:
-            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-        else:
+        if not sl:
             sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
                 self.df.iloc[i]['Close'], 2)
-            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
         tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
-        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         return [sl, tp]
 
     def retracement_bar_buy_condition(self, i):
@@ -218,7 +228,7 @@ class ToolBox:
 
     def macd_sell_condition(self, i):
         """defines the macd selling condition."""
-        if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] > 0 \
+        if self.df.iloc[i][self.macds] > self.df.iloc[i][self.macd] \
                 and self.df.iloc[i][self.macdh] <= -0.01 / self.lever:
             return True
 
@@ -256,15 +266,12 @@ class ToolBox:
         """Identifies supports and resistances to set sl and tp
         for selling conditions"""
         sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
-        if sl:
-            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
-        else:
+
+        if not sl:
             sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
                 self.df.iloc[i]['Close'], 4)
-            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
         tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
-        self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
         return [sl, tp]
 
     def retracement_bar_sell_condition(self, i):
@@ -335,7 +342,7 @@ class ToolBox:
                 valid_conditions += 1
 
         print(conditions)
-        print("\n")
+        print(valid_conditions)
         if valid_conditions == len(conditions):
             return True
 
@@ -387,6 +394,7 @@ class ToolBox:
 
         """Applies buying position logic"""
         if self.buying_conditions_applier(idx):
+            print("Conditions are true")
             if self.strat.rsf_n1:
                 sl = self.rsf_buy_condition(idx)[0]
                 tp = self.rsf_buy_condition(idx)[1]
@@ -444,6 +452,7 @@ class ToolBox:
 
 """__________________________________________________________________________________________________________________"""
 
-# print(ToolBox(2).request_creator())
+# print(ToolBox(6337).request_creator())
+# print(ToolBox(6337).get_lot())
 """__________________________________________________________________________________________________________________"""
 

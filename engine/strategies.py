@@ -94,10 +94,11 @@ class Strat:
 """__________________________________________________________________________________________________________________"""
 
 
-strategy = Strat(84)
-print(strategy.create_strategy_df().tail(20))
+# strategy = Strat(84)
+# print(strategy.create_strategy_df().tail(20))
 # print(strategy.get_trend_line_angle())
-print(help(ta.macd))
+# print(help(ta.macd))
+
 
 
 

@@ -30,7 +30,7 @@ class Simulator:
 
         # Choose resistance, support parameters.
         # The number of candles to consider before [0] and after [1] direction switch
-        self.rsf_vals = [self.strat.rsf_n1, self.strat.rsf_n1]
+        self.rsf_vals = [self.strat.rsf_n1, self.strat.rsf_n2]
         self.lever = 1
 
         # Setups string indexes
@@ -95,7 +95,7 @@ class Simulator:
             return True
 
     def ema_clip_buy_condition(self, i):
-        if self.df.iloc[i][self.ema] > self.df.iloc[i - 1]['Close']:
+        if self.df.iloc[i][self.ema] > self.df.iloc[i]['Close']:
             return True
 
     def ema_trend_buy_condition(self, i):
@@ -173,19 +173,20 @@ class Simulator:
         avg_shift = shifts / self.strat.n_vol_tp
         tp_val = avg_shift * self.strat.tp_percentage / 100
 
-        if direction == 1:
-            tp = self.df.iloc[i + 1]['Open'] + tp_val
-            sl = self.df.iloc[i + 1]['Open'] - tp_val * self.strat.sl_percentage / 100
+        if i < len(self.df - 1):
+            if direction == 1:
+                tp = self.df.iloc[i]['Close'] + tp_val
+                sl = self.df.iloc[i]['Close'] - tp_val * self.strat.sl_percentage / 100
 
-            self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
-            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+                self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+                self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
-        elif direction == 2:
-            tp = self.df.iloc[i + 1]['Open'] - tp_val
-            sl = self.df.iloc[i + 1]['Open'] + tp_val * self.strat.sl_percentage / 100
+            elif direction == 2:
+                tp = self.df.iloc[i]['Close'] - tp_val
+                sl = self.df.iloc[i]['Close'] + tp_val * self.strat.sl_percentage / 100
 
-            self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
-            self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
+                self.df.iloc[i, self.df.columns.get_loc('tp')] = tp
+                self.df.iloc[i, self.df.columns.get_loc('sl')] = sl
 
         return [sl, tp]
 
@@ -221,7 +222,7 @@ class Simulator:
             return True
 
     def ema_clip_sell_condition(self, i):
-        if self.df.iloc[i][self.ema] < self.df.iloc[i - 1]['Close']:
+        if self.df.iloc[i][self.ema] < self.df.iloc[i]['Close']:
             return True
 
     def ema_trend_sell_condition(self, i):
@@ -314,6 +315,11 @@ class Simulator:
             if self.retracement_bar_buy_condition(i):
                 valid_conditions += 1
 
+        if self.strat.ema_clip:
+            conditions.append("ema_clip")
+            if self.ema_clip_buy_condition(i):
+                valid_conditions += 1
+
         if valid_conditions == len(conditions):
             return True
 
@@ -345,6 +351,11 @@ class Simulator:
         if self.strat.retracement_bar_val:
             conditions.append("rbv")
             if self.retracement_bar_sell_condition(i):
+                valid_conditions += 1
+
+        if self.strat.ema_clip:
+            conditions.append("ema_clip")
+            if self.ema_clip_sell_condition(i):
                 valid_conditions += 1
 
         if valid_conditions == len(conditions):
@@ -413,7 +424,7 @@ class Simulator:
                         "num_pos": num_position,
                         "date": self.df.iloc[i]["Date"],
                         "direction": "buy",
-                        "open_val": self.df.iloc[i + 1]['Open'],
+                        "open_val": self.df.iloc[i+1]['Open'],
                         "sl": self.df.iloc[i]['sl'],
                         "tp": self.df.iloc[i]['tp'],
                         "trend_angle": self.df.iloc[i]['trend_angle'],
@@ -434,7 +445,7 @@ class Simulator:
                         "num_pos": num_position,
                         "date": self.df.iloc[i]["Date"],
                         "direction": "sell",
-                        "open_val": self.df.iloc[i + 1]['Open'],
+                        "open_val": self.df.iloc[i+1]['Open'],
                         "sl": self.df.iloc[i]['sl'],
                         "tp": self.df.iloc[i]['tp'],
                         "trend_angle": self.df.iloc[i]['trend_angle'],
@@ -452,7 +463,7 @@ class Simulator:
                             close_val=round(pos["tp"], 9),
                             win=1,
                             loss=0,
-                            profit=round(profit, 9),
+                            profit=round(profit, 5),
                             date=pos["date"],
                             trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
@@ -469,7 +480,7 @@ class Simulator:
                             close_val=round(pos["sl"], 9),
                             win=0,
                             loss=1,
-                            profit=round(loss, 9),
+                            profit=round(loss, 5),
                             date=pos["date"],
                             trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
@@ -487,7 +498,7 @@ class Simulator:
                             close_val=round(pos["tp"], 9),
                             win=1,
                             loss=0,
-                            profit=round(profit, 9),
+                            profit=round(profit, 5),
                             date=pos["date"],
                             trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
@@ -504,7 +515,7 @@ class Simulator:
                             close_val=round(pos["sl"], 9),
                             win=0,
                             loss=1,
-                            profit=round(loss, 9),
+                            profit=round(loss, 5),
                             date=pos["date"],
                             trend_angle=round(pos["trend_angle"], 5),
                             strategy=self.strategy_id
@@ -600,6 +611,8 @@ class Launcher:
             res += f'-vol-{self.params["n_vol_tp"]}-{self.params["tp_percent"]}-{self.params["sl_percent"]}'
         if self.params["ma_tp"]:
             res += f'-ma_tp-{self.params["ma_tp"]}'
+        if self.params["ema_clip"]:
+            res += f'-ema_clip'
         return res
 
     def check_duplicates(self, ticker):
@@ -640,6 +653,7 @@ class Launcher:
                     sl_percentage=self.params["sl_percent"],
                     retracement_bar_val=self.params["rbv"],
                     ma_tp=self.params["ma_tp"],
+                    ema_clip=self.params["ema_clip"],
                     description=self.params["description"],
 
                 )
@@ -672,35 +686,36 @@ class Launcher:
 """__________________________________________________________________________________________________________________"""
 
 launcher = Launcher(
-    ["JPY=X", "EURJPY=X", "EURCAD=X", "EURAUD=X", "EURNZD=X"],
+    ["JPY=X"],
     {
         "period": "50d",
         "interval": "5m",
-        "rsi_length": None,
-        "rsi_high": None,
-        "rsi_low": None,
-        "macd_fast": 12,
-        "macd_slow": 26,
+        "rsi_length": 14,
+        "rsi_high": 70,
+        "rsi_low": 30,
+        "macd_fast": None,
+        "macd_slow": None,
         "ema_length": 100,
         "sma_length": None,
         "trend_line_win": 100,
-        "trend_angle": 45,
+        "trend_angle": 15,
         "short_win": 50,
-        "short_angle": 20,
+        "short_angle": 10,
         "rsf_n1": None,
         "rsf_n2": None,
-        "n_vol_tp": None,
-        "tp_percent": None,
-        "sl_percent": None,
+        "n_vol_tp": 75,
+        "tp_percent": 200,
+        "sl_percent": 50,
         "rbv": None,
-        "ma_tp": 2.0,
+        "ma_tp": None,
+        "ema_clip": False,
         "description": "res:sup finder strength = 4"
     },
     'D:\Predictive Financial Tools\currency_tickers.txt',
 )
 
-print(launcher.strategies_creator())
-print(launcher.launch())
+# print(launcher.strategies_creator())
+# print(launcher.launch())
 
 
 """__________________________________________________________________________________________________________________"""
@@ -758,14 +773,14 @@ class MultipleLauncher:
 gen_multiple_launcher = MultipleLauncher(launcher,
                                          {'param1': {
                                              'name': 'trend_line_win',
-                                             'scope': [100, 1000],
+                                             'scope': [100, 500],
                                              'increments': 50
                                          },
                                              'param2': {
                                                  'name': 'trend_angle',
-                                                 'scope': [10, 65],
+                                                 'scope': [10, 50],
                                                  'increments': 5
                                              },
                                          })
 
-# print(gen_multiple_launcher.multi_launch())
+print(gen_multiple_launcher.multi_launch())

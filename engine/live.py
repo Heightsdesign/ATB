@@ -12,7 +12,7 @@ login = 41792961
 password = 'e9w3Ef2zL2Hl'
 server = 'AdmiralMarkets-Demo'
 
-best_strats = analyser(9)
+best_strats = analyser(15)
 print(best_strats)
 
 
@@ -35,10 +35,9 @@ class Live:
         mt_connect()
         margin = mt.account_info().margin
         balance = mt.account_info().balance
-        print(margin)
-        print(balance)
 
         if margin / balance * 100 < self.max_margin:
+            print("Margin True")
             return True
 
     def run(self):
@@ -46,14 +45,17 @@ class Live:
         mt_connect()
 
         while self.launch:
-
+            print(mt.account_info().margin)
+            print(mt.account_info().balance)
             for id in self.strats:
-                request = ToolBox(id).request_creator()
+                req= ToolBox(id).request_creator()
+                print("\n")
                 if self.check_margin():
-                    if request:
-                        print(request["action"])
-                        mt.order_send(request)
-                        print(mt.order_send(request))
+                    if req:
+                        print(req)
+                        mt_connect()
+                        mt.order_send(req)
+                        print(mt.order_send(req))
 
             print(datetime.now())
             time.sleep(60.0 - ((time.time() - start_time) % 60.0))
