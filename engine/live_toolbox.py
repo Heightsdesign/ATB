@@ -29,6 +29,7 @@ def mt_account_info():
 def get_price(symbol):
     mt_connect()
     price = mt.symbol_info_tick(symbol).ask
+    print(type(price))
     return price
 
 
@@ -63,9 +64,9 @@ class ToolBox:
         balance = mt_account_info().balance
         lot = 0
         if balance < 1000:
-            lot = 0.01
+            lot = 0.02
         elif 1000 <= balance < 2000:
-            lot = 0.01
+            lot = 0.02
         elif 2000 <= balance < 3000:
             lot = 0.02
         elif 3000 <= balance < 4000:
@@ -171,12 +172,15 @@ class ToolBox:
         """Identifies supports and resistances to set sl and tp
         for buying conditions."""
 
-        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(self.df.iloc[i]['Close'], 4)
+        symbol = self.create_mt_symbol()
+        price = get_price(symbol)
+
+        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 0).find_strongest(price, 4)
         if not sl:
             sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 0).find_strongest(
-                self.df.iloc[i]['Close'], 2)
+                price, 2)
 
-        tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
+        tp = price + (price - sl) * 2
         return [sl, tp]
 
     def retracement_bar_buy_condition(self, i):
@@ -210,14 +214,20 @@ class ToolBox:
 
         avg_shift = shifts / self.strat.n_vol_tp
         tp_val = avg_shift * self.strat.tp_percentage / 100
+        tp_val = tp_val * 1.15
+
+        symbol = self.create_mt_symbol()
+        price = get_price(symbol)
 
         if direction == 1:
-            tp = self.df.iloc[i]['Close'] + tp_val
-            sl = self.df.iloc[i]['Close'] - tp_val * self.strat.sl_percentage / 100
+
+            tp = price + tp_val
+            sl = price - tp_val * self.strat.sl_percentage / 100
 
         elif direction == 2:
-            tp = self.df.iloc[i]['Close'] - tp_val
-            sl = self.df.iloc[i]['Close'] + tp_val * self.strat.sl_percentage / 100
+
+            tp = price - tp_val
+            sl = price + tp_val * self.strat.sl_percentage / 100
 
         return [sl, tp]
 
@@ -265,13 +275,17 @@ class ToolBox:
     def rsf_sell_condition(self, i):
         """Identifies supports and resistances to set sl and tp
         for selling conditions"""
-        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(self.df.iloc[i]['Close'], 4)
+
+        symbol = self.create_mt_symbol()
+        price = get_price(symbol)
+
+        sl = rsf(self.df, self.rsf_vals[0], self.rsf_vals[1], 1).find_strongest(price, 4)
 
         if not sl:
             sl = rsf(self.df, self.rsf_vals[0] - 1, self.rsf_vals[1] - 1, 1).find_strongest(
-                self.df.iloc[i]['Close'], 4)
+                price, 4)
 
-        tp = self.df.iloc[i]['Close'] + (self.df.iloc[i]['Close'] - sl) * 2
+        tp = price + (price - sl) * 2
         return [sl, tp]
 
     def retracement_bar_sell_condition(self, i):
@@ -296,17 +310,21 @@ class ToolBox:
     def ma_tp_condition(self, i, direction):
 
         sl = self.df.iloc[i][self.ema]
+        sl = sl * 1.15
         tp = 0
+
+        symbol = self.create_mt_symbol()
+        price = get_price(symbol)
 
         # buying direction
         if direction == 1:
-            sl_shift = self.df.iloc[i]['Close'] - sl
-            tp = self.df.iloc[i]['Close'] + sl_shift * float(self.strat.ma_tp)
+            sl_shift = price - sl
+            tp = price + sl_shift * float(self.strat.ma_tp)
 
         # selling direction
         elif direction == 2:
-            sl_shift = sl - self.df.iloc[i]['Close']
-            tp = self.df.iloc[i]['Close'] - sl_shift * float(self.strat.ma_tp)
+            sl_shift = sl - price
+            tp = price - sl_shift * float(self.strat.ma_tp)
 
         return [sl, tp]
 
