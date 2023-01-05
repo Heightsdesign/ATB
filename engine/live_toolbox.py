@@ -29,7 +29,6 @@ def mt_account_info():
 def get_price(symbol):
     mt_connect()
     price = mt.symbol_info_tick(symbol).ask
-    print(type(price))
     return price
 
 
@@ -64,7 +63,7 @@ class ToolBox:
         balance = mt_account_info().balance
         lot = 0
         if balance < 1000:
-            lot = 0.02
+            lot = 0.03
         elif 1000 <= balance < 2000:
             lot = 0.02
         elif 2000 <= balance < 3000:

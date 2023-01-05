@@ -1,5 +1,5 @@
 import MetaTrader5 as mt
-
+import winsound
 # Demo Account
 login = 41795408
 password = 'S3lZc200ewoo'
@@ -45,8 +45,3 @@ request = {
 #print(mt_connect())
 #print(get_price(symbol))
 #print(mt.order_send(request))
-
-val1 = round(412.8099975590, 9)
-val2 = round(413.6649938370, 9)
-
-print(val2 - val1)

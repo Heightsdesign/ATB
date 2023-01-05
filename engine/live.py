@@ -1,6 +1,7 @@
 import MetaTrader5 as mt
 import time
 from datetime import datetime, date, timedelta
+import winsound
 
 from live_toolbox import ToolBox
 from analyser import analyser
@@ -48,10 +49,9 @@ class Live:
         """Checks positions for one symbol are only opened with defined hourly interval"""
 
         mt_connect()
-        today = datetime.today()
+        today = datetime.today() + timedelta(hours=1)
         delta = today - timedelta(hours=hour_delta)
         symbols = []
-
         orders = mt.history_orders_get(delta, today)
         for order in orders:
             symbols.append(order.symbol)
@@ -92,6 +92,8 @@ class Live:
                                 mt_connect()
                                 mt.order_send(req)
                                 print(mt.order_send(req))
+                                winsound.PlaySound('signal.wav', winsound.SND_FILENAME)
+
 
             print(datetime.now())
             time.sleep(60.0 - ((time.time() - start_time) % 60.0))
@@ -101,4 +103,4 @@ class Live:
 
 print(Live(best_strats, 50).run())
 # print(Live(best_strats, 50).max_pos(3, "USDJPY"))
-# print(Live(best_strats, 50).get_history(10, "USDJPY"))
+# print(Live(best_strats, 50).get_history(2, "EURNZD"))
