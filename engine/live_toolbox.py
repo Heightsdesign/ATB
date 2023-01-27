@@ -63,15 +63,15 @@ class ToolBox:
         balance = mt_account_info().balance
         lot = 0
         if balance < 1000:
-            lot = 0.03
+            lot = 0.01
         elif 1000 <= balance < 2000:
             lot = 0.02
         elif 2000 <= balance < 3000:
-            lot = 0.02
-        elif 3000 <= balance < 4000:
             lot = 0.03
-        elif 4000 <= balance < 5000:
+        elif 3000 <= balance < 4000:
             lot = 0.04
+        elif 4000 <= balance < 5000:
+            lot = 0.05
 
         return lot
 
